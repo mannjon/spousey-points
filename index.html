@@ -1,0 +1,1011 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Spousey Points</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #edf0ea;
+        --surface: #ffffff;
+        --surface-2: #f3f5f0;
+        --ink: #182420;
+        --muted: #5b6a61;
+        --line: #d6ddd1;
+        --green: #177a4c;
+        --green-deep: #0d5c38;
+        --green-soft: #e2f1e7;
+        --red: #c23a2a;
+        --red-soft: #fbe9e5;
+        --gold: #a8741a;
+        --gold-soft: #f8ecd2;
+        --reel: #141a17;
+        --reel-digit: #f2f5f0;
+        --reel-dim: #5f6f66;
+        --shadow: 0 10px 30px rgba(24, 36, 32, 0.10);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0e130f;
+          --surface: #1a211c;
+          --surface-2: #212a23;
+          --ink: #eaf0ea;
+          --muted: #9db0a3;
+          --line: #2e3a31;
+          --green: #3cb179;
+          --green-deep: #2b8f5e;
+          --green-soft: #173527;
+          --red: #e0654f;
+          --red-soft: #3a201a;
+          --gold: #dfae4a;
+          --gold-soft: #33290f;
+          --reel: #050807;
+          --reel-digit: #f2f5f0;
+          --reel-dim: #5f6f66;
+          --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+        line-height: 1.45;
+      }
+      .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace; }
+      .wrap { max-width: 560px; margin: 0 auto; padding: 18px 16px 110px; }
+      h1, h2, h3 { margin: 0; line-height: 1.15; }
+      button { font: inherit; cursor: pointer; }
+      button:disabled { cursor: not-allowed; opacity: 0.45; }
+      :focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+
+      /* ---------- acting-as switcher ---------- */
+      .acting { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+      .acting .lbl { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+      .seg { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 3px; }
+      .seg button {
+        border: 0; background: transparent; color: var(--ink);
+        padding: 7px 16px; border-radius: 999px; font-weight: 600; font-size: 0.95rem;
+      }
+      .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+      .acting .hint { font-size: 0.82rem; color: var(--muted); width: 100%; }
+
+      /* ---------- balance cards ---------- */
+      .cards { display: grid; gap: 12px; }
+      .card {
+        background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+        padding: 16px 18px; box-shadow: var(--shadow);
+      }
+      .card.me { border-color: var(--green); border-width: 2px; padding: 15px 17px; }
+      .card .who { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+      .card .name { font-size: 1.25rem; font-weight: 800; }
+      .card .flavor { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+      .tag-later {
+        font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+        background: var(--gold-soft); color: var(--gold); border-radius: 999px; padding: 3px 9px;
+      }
+      .bals { display: flex; gap: 12px; margin-top: 12px; }
+      .bal { flex: 1; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+      .bal .k { font-size: 0.74rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+      .bal .v { font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
+      .bal .v small { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+      .bal.pts .v { color: var(--green-deep); }
+      @media (prefers-color-scheme: dark) { .bal.pts .v { color: var(--green); } }
+      .bal.tok .v { color: var(--gold); }
+      .bal .sub { font-size: 0.76rem; color: var(--muted); }
+
+      .rules-line { margin: 14px 2px 0; font-size: 0.86rem; color: var(--muted); }
+      .rules-line strong { color: var(--ink); }
+
+      /* ---------- panels ---------- */
+      .panel {
+        background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+        padding: 18px; box-shadow: var(--shadow); margin-top: 16px;
+      }
+      .panel h2 { font-size: 1.15rem; font-weight: 800; }
+      .panel .desc { font-size: 0.9rem; color: var(--muted); margin: 4px 0 0; }
+      .field { margin-top: 14px; }
+      .field label { display: block; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+      input[type="text"], input[type="number"], textarea {
+        width: 100%; font: inherit; color: var(--ink);
+        background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
+        padding: 11px 12px;
+      }
+      textarea { resize: vertical; min-height: 62px; }
+      .chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+      .chips button {
+        border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+        border-radius: 999px; padding: 6px 12px; font-size: 0.86rem; font-weight: 600;
+      }
+      .chips button[aria-pressed="true"] { background: var(--green-soft); border-color: var(--green); color: var(--green-deep); }
+      @media (prefers-color-scheme: dark) { .chips button[aria-pressed="true"] { color: var(--green); } }
+
+      .amtrow { display: flex; gap: 10px; align-items: stretch; }
+      .amtrow input { flex: 1; font-size: 1.2rem; font-weight: 700; text-align: center; }
+
+      .btn {
+        border: 0; border-radius: 12px; padding: 13px 20px;
+        font-weight: 800; font-size: 1rem; letter-spacing: 0.01em;
+        background: var(--ink); color: var(--bg);
+      }
+      .btn:active { transform: translateY(1px); }
+      .btn.green { background: var(--green); color: #fff; }
+      .btn.green:hover { background: var(--green-deep); }
+      .btn.red { background: var(--red); color: #fff; }
+      .btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
+      .btn.block { width: 100%; }
+      .btnrow { display: flex; gap: 10px; margin-top: 16px; }
+      .btnrow .btn { flex: 1; }
+      .form-msg { font-size: 0.88rem; margin-top: 10px; min-height: 1.2em; }
+      .form-msg.err { color: var(--red); font-weight: 600; }
+      .form-msg.ok { color: var(--green-deep); font-weight: 600; }
+      @media (prefers-color-scheme: dark) { .form-msg.ok { color: var(--green); } }
+
+      /* ---------- notices ---------- */
+      .notice {
+        border: 1.5px dashed var(--gold); background: var(--gold-soft);
+        border-radius: 14px; padding: 14px 16px; margin-top: 12px;
+      }
+      .notice .t { font-weight: 800; }
+      .notice .d { font-size: 0.9rem; margin-top: 2px; }
+      .notice .btn { margin-top: 10px; background: var(--gold); color: #fff; padding: 9px 16px; font-size: 0.92rem; }
+
+      /* ---------- digit picker (spender) ---------- */
+      .picker-zone { margin-top: 18px; text-align: center; }
+      .picker {
+        display: inline-flex; gap: 8px; background: var(--reel);
+        padding: 14px; border-radius: 16px; box-shadow: inset 0 2px 14px rgba(0,0,0,0.6);
+        touch-action: none; user-select: none; -webkit-user-select: none;
+      }
+      .picker.locked { opacity: 0.75; pointer-events: none; }
+      .col { width: 62px; cursor: ns-resize; border-radius: 10px; padding: 2px 0; }
+      .col.sel { box-shadow: 0 0 0 2px var(--green) inset; background: rgba(255,255,255,0.05); }
+      .col .win {
+        height: 132px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        -webkit-mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
+        mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
+      }
+      .col .d { font-family: "IBM Plex Mono", monospace; font-weight: 700; line-height: 44px; height: 44px; }
+      .col .d.side { font-size: 1.5rem; color: var(--reel-dim); }
+      .col .d.cur { font-size: 2.6rem; color: var(--reel-digit); }
+      .col .place { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; color: var(--reel-dim); text-transform: uppercase; margin-top: 6px; font-family: "IBM Plex Mono", monospace; }
+      .picker-cap { font-size: 0.85rem; color: var(--muted); margin-top: 10px; }
+      .balcheck { font-size: 0.92rem; margin-top: 8px; font-weight: 600; }
+      .balcheck.err { color: var(--red); }
+
+      .locked-card { text-align: center; padding: 8px 0 2px; }
+      .locked-card .big { font-size: 3rem; font-weight: 700; }
+      .locked-card .big small { font-size: 1rem; color: var(--muted); font-weight: 600; }
+      .nfc-pulse {
+        width: 74px; height: 74px; margin: 6px auto 12px; border-radius: 50%;
+        border: 2px solid var(--green); display: flex; align-items: center; justify-content: center;
+        font-family: "IBM Plex Mono", monospace; font-weight: 700; font-size: 0.7rem; color: var(--green-deep);
+        animation: pulse 1.6s ease-in-out infinite;
+      }
+      @media (prefers-color-scheme: dark) { .nfc-pulse { color: var(--green); } }
+      @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(23,122,76,0.35); } 50% { box-shadow: 0 0 0 14px rgba(23,122,76,0); } }
+      @media (prefers-reduced-motion: reduce) { .nfc-pulse { animation: none; } .btn:active { transform: none; } }
+
+      /* ---------- offer overlay ---------- */
+      .overlay {
+        position: fixed; inset: 0; z-index: 40; background: var(--bg);
+        overflow-y: auto; display: none;
+      }
+      .overlay.open { display: block; }
+      .overlay .inner { max-width: 560px; margin: 0 auto; padding: 26px 16px 40px; text-align: center; }
+      .phone-tag { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+      .offer-line { font-size: 1.3rem; font-weight: 600; margin-top: 14px; }
+      .offer-line strong { font-weight: 800; }
+      .offer-num-zone { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 30px 0 6px; }
+      .offer-num {
+        display: inline-flex; gap: 6px; background: var(--reel); padding: 18px 16px; border-radius: 16px;
+        box-shadow: inset 0 2px 14px rgba(0,0,0,0.6);
+      }
+      .offer-num .od {
+        font-family: "IBM Plex Mono", monospace; font-weight: 700; font-size: 3.4rem; line-height: 1;
+        color: var(--reel-digit); width: 52px; text-align: center; border-radius: 8px; padding: 6px 0;
+      }
+      .offer-num.editable .od { cursor: pointer; }
+      .offer-num .od.active { box-shadow: 0 0 0 2px var(--green); background: rgba(255,255,255,0.07); color: #fff; }
+      .stepper { display: flex; flex-direction: column; gap: 10px; }
+      .stepper button {
+        width: 52px; height: 52px; border-radius: 12px; border: 1.5px solid var(--line);
+        background: var(--surface); color: var(--ink); font-size: 1.3rem; font-weight: 800; line-height: 1;
+        box-shadow: var(--shadow);
+      }
+      .stepper button:active { transform: translateY(1px); }
+      .offer-cap { font-size: 0.88rem; color: var(--muted); }
+      .offer-cap .changed { color: var(--gold); font-weight: 700; }
+      .overlay .btnrow { max-width: 420px; margin-left: auto; margin-right: auto; }
+      .overlay .btnrow .btn { padding: 16px 20px; font-size: 1.1rem; }
+
+      /* ---------- log ---------- */
+      .log-list { display: grid; gap: 10px; margin-top: 14px; }
+      .entry { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 13px 15px; }
+      .entry .top { display: flex; align-items: baseline; gap: 9px; flex-wrap: wrap; }
+      .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; align-self: center; }
+      .dot.green { background: var(--green); } .dot.gold { background: var(--gold); } .dot.red { background: var(--red); } .dot.gray { background: var(--muted); }
+      .entry .what { font-weight: 700; flex: 1; min-width: 140px; }
+      .entry .amt { font-weight: 700; font-size: 1.05rem; }
+      .entry .meta { font-size: 0.84rem; color: var(--muted); margin-top: 3px; }
+      .entry .note-view { font-size: 0.9rem; margin-top: 6px; background: var(--surface-2); border-radius: 8px; padding: 8px 10px; }
+      .entry .addnote { margin-top: 8px; border: 0; background: none; color: var(--green-deep); font-weight: 700; font-size: 0.88rem; padding: 0; }
+      @media (prefers-color-scheme: dark) { .entry .addnote { color: var(--green); } }
+      .entry .note-edit { margin-top: 8px; display: none; }
+      .entry .note-edit.open { display: block; }
+      .entry .note-edit .btn { margin-top: 8px; padding: 9px 16px; font-size: 0.9rem; }
+      .status-chip { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 999px; padding: 2px 8px; background: var(--gold-soft); color: var(--gold); }
+      .status-chip.done { background: var(--green-soft); color: var(--green-deep); }
+      @media (prefers-color-scheme: dark) { .status-chip.done { color: var(--green); } }
+      .empty { text-align: center; color: var(--muted); padding: 28px 10px; font-size: 0.95rem; }
+
+      /* ---------- tab bar ---------- */
+      .tabbar {
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+        background: var(--surface); border-top: 1px solid var(--line);
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      .tabbar .in { max-width: 560px; margin: 0 auto; display: flex; }
+      .tabbar button {
+        flex: 1; border: 0; background: transparent; color: var(--muted);
+        padding: 13px 6px 11px; font-weight: 700; font-size: 0.95rem;
+        border-top: 3px solid transparent;
+      }
+      .tabbar button[aria-selected="true"] { color: var(--ink); border-top-color: var(--green); }
+      .screen { display: none; }
+      .screen.active { display: block; }
+
+      /* ---------- toast ---------- */
+      .toast {
+        position: fixed; left: 50%; bottom: 86px; transform: translateX(-50%) translateY(20px);
+        background: var(--ink); color: var(--bg); border-radius: 12px; padding: 12px 18px;
+        font-weight: 700; font-size: 0.95rem; opacity: 0; pointer-events: none; z-index: 60;
+        transition: opacity 0.25s ease, transform 0.25s ease; max-width: calc(100vw - 32px); text-align: center;
+        box-shadow: var(--shadow);
+      }
+      .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+      @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+
+      <!-- ================= HOME ================= -->
+      <section class="screen active" id="screen-home" aria-label="Balances">
+        <div class="acting">
+          <span class="lbl" id="acting-lbl">Acting as</span>
+          <div class="seg" role="group" aria-labelledby="acting-lbl">
+            <button type="button" id="as-jonathan" aria-pressed="true">Jonathan</button>
+            <button type="button" id="as-elizabeth" aria-pressed="false">Elizabeth</button>
+          </div>
+          <span class="hint">One phone plays both sides on this test page — switch to act as the other person.</span>
+        </div>
+
+        <div id="notices"></div>
+
+        <div class="cards" id="cards"></div>
+
+        <p class="rules-line" id="rules-line"></p>
+
+        <div class="panel" id="redeem-panel">
+          <h2>Redeem tokens</h2>
+          <p class="desc">Spend your own tokens on something for yourself. The other person gets a notice to add it to the log — no approval needed.</p>
+          <div class="field">
+            <label for="redeem-amt">Tokens to redeem</label>
+            <div class="amtrow">
+              <input type="number" id="redeem-amt" class="mono" min="1" step="1" inputmode="numeric" placeholder="0" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="redeem-reason">What for?</label>
+            <input type="text" id="redeem-reason" placeholder="e.g. Guilt-free nap, no questions asked" />
+          </div>
+          <div class="btnrow">
+            <button type="button" class="btn green block" id="redeem-btn">Redeem</button>
+          </div>
+          <p class="form-msg" id="redeem-msg" role="status"></p>
+        </div>
+
+        <div class="panel" id="buy-panel">
+          <h2>Buy more points</h2>
+          <p class="desc">Trade your tokens back into spendable points, 1 token = 1 point.</p>
+          <div class="field">
+            <label for="buy-amt">Tokens to trade in</label>
+            <div class="amtrow">
+              <input type="number" id="buy-amt" class="mono" min="1" step="1" inputmode="numeric" placeholder="0" />
+            </div>
+          </div>
+          <div class="btnrow">
+            <button type="button" class="btn block" id="buy-btn">Buy points</button>
+          </div>
+          <p class="form-msg" id="buy-msg" role="status"></p>
+        </div>
+      </section>
+
+      <!-- ================= SPEND ================= -->
+      <section class="screen" id="screen-spend" aria-label="Spend points">
+        <div class="panel" style="margin-top:0">
+          <h2>Spend points on a favor</h2>
+          <p class="desc">Set the price, lock it in, then hold phones together — the other phone gets the offer to accept, decline, or counter.</p>
+
+          <div class="field">
+            <label>Who's doing the favor?</label>
+            <div class="chips" id="receiver-chips"></div>
+          </div>
+
+          <div class="field">
+            <label for="reason">What's the favor?</label>
+            <input type="text" id="reason" placeholder="What's the ask?" />
+            <div class="chips" id="reason-chips"></div>
+          </div>
+
+          <div class="picker-zone">
+            <div class="picker" id="picker" tabindex="0" role="spinbutton" aria-label="Point amount. Swipe a column up or down, or type digits." aria-valuemin="0" aria-valuemax="9999" aria-valuenow="0"></div>
+            <p class="picker-cap">Swipe a column up or down to spin it. Tap a column, then type, if you'd rather.</p>
+            <p class="balcheck mono" id="balcheck"></p>
+          </div>
+
+          <div class="field">
+            <label for="typein">…or type the amount</label>
+            <div class="amtrow">
+              <input type="number" id="typein" class="mono" min="0" max="9999" step="1" inputmode="numeric" placeholder="0" />
+            </div>
+          </div>
+
+          <div id="spend-actions">
+            <div class="btnrow">
+              <button type="button" class="btn green block" id="confirm-btn">Confirm — lock it in</button>
+            </div>
+            <p class="form-msg" id="spend-msg" role="status"></p>
+          </div>
+
+          <div id="locked-zone" hidden>
+            <div class="locked-card">
+              <div class="nfc-pulse">NFC</div>
+              <div class="big mono"><span id="locked-amt">0</span> <small>pts</small></div>
+              <p class="desc" id="locked-line"></p>
+            </div>
+            <div class="btnrow">
+              <button type="button" class="btn green" id="to-receiver-btn"></button>
+              <button type="button" class="btn ghost" id="cancel-offer-btn">Cancel offer</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= LOG ================= -->
+      <section class="screen" id="screen-log" aria-label="Transaction log">
+        <h2 style="font-size:1.3rem;font-weight:800">Transaction log</h2>
+        <p class="desc" style="color:var(--muted);font-size:0.9rem;margin-top:4px">Every transfer, redemption, and allowance lands here. Tap “Add details” on any entry to note what it was really for.</p>
+        <div class="log-list" id="log-list"></div>
+      </section>
+    </main>
+
+    <!-- ================= OFFER OVERLAY ================= -->
+    <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="offer-line">
+      <div class="inner">
+        <p class="phone-tag" id="phone-tag"></p>
+        <p class="offer-line" id="offer-line"></p>
+        <div class="offer-num-zone">
+          <div class="offer-num mono" id="offer-num"></div>
+          <div class="stepper" id="offer-stepper">
+            <button type="button" id="step-up" aria-label="Raise the selected digit by 1">▲</button>
+            <button type="button" id="step-down" aria-label="Lower the selected digit by 1">▼</button>
+          </div>
+        </div>
+        <p class="offer-cap" id="offer-cap"></p>
+        <p class="form-msg err" id="offer-msg" role="alert"></p>
+        <div class="btnrow">
+          <button type="button" class="btn green" id="offer-accept">Accept</button>
+          <button type="button" class="btn red" id="offer-decline">Decline</button>
+        </div>
+      </div>
+    </div>
+
+    <nav class="tabbar" aria-label="Sections">
+      <div class="in">
+        <button type="button" data-tab="home" aria-selected="true">Balances</button>
+        <button type="button" data-tab="spend" aria-selected="false">Spend</button>
+        <button type="button" data-tab="log" aria-selected="false">Log</button>
+      </div>
+    </nav>
+
+    <div class="toast" id="toast" role="status"></div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        /* ---------------- dates ---------------- */
+        function lastSaturday(from) {
+          var d = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+          var diff = (d.getDay() + 1) % 7; /* Sat = 6 -> 0 */
+          d.setDate(d.getDate() - diff);
+          return d;
+        }
+        function nextSaturday(from) {
+          var d = lastSaturday(from);
+          var today = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+          if (d < today) d.setDate(d.getDate() + 7);
+          return d;
+        }
+        function monthEnd(from) {
+          return new Date(from.getFullYear(), from.getMonth() + 1, 0);
+        }
+        function fmt(d) {
+          return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+        }
+        function fmtTime(d) {
+          return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) + ", " +
+                 d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+        }
+        var now = new Date();
+        var dropDate = lastSaturday(now);
+        var nextDrop = nextSaturday(now);
+        var expiry = monthEnd(now);
+
+        /* ---------------- state ---------------- */
+        var users = {
+          jonathan: { name: "Jonathan", flavor: "Hubby points", points: 100, tokens: 0 },
+          elizabeth: { name: "Elizabeth", flavor: "Wife points", points: 100, tokens: 0 },
+          piper: { name: "Piper", flavor: "Kiddo points", points: 0, tokens: 0, later: true }
+        };
+        var me = "jonathan";
+        var logSeq = 0;
+        var log = [];
+        var notices = []; /* {id, to, entryId} */
+        var offer = null; /* {from,to,amount,original,reason,stage} */
+
+        function addLog(entry) {
+          entry.id = ++logSeq;
+          entry.ts = entry.ts || new Date();
+          log.unshift(entry);
+          return entry;
+        }
+        addLog({ type: "allowance", who: "elizabeth", amount: 100, ts: dropDate, text: "Weekly allowance — 100 wife points" });
+        addLog({ type: "allowance", who: "jonathan", amount: 100, ts: dropDate, text: "Weekly allowance — 100 hubby points" });
+
+        /* ---------------- cha-ching ---------------- */
+        var actx = null;
+        function chaChing() {
+          try {
+            var AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return;
+            actx = actx || new AC();
+            if (actx.state === "suspended") actx.resume();
+            var t = actx.currentTime;
+            /* "cha" — register drawer: short filtered noise burst */
+            var len = Math.floor(actx.sampleRate * 0.09);
+            var buf = actx.createBuffer(1, len, actx.sampleRate);
+            var data = buf.getChannelData(0);
+            for (var i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+            var noise = actx.createBufferSource(); noise.buffer = buf;
+            var bp = actx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2800; bp.Q.value = 0.7;
+            var ng = actx.createGain();
+            ng.gain.setValueAtTime(0.22, t);
+            ng.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
+            noise.connect(bp); bp.connect(ng); ng.connect(actx.destination);
+            noise.start(t);
+            /* "ching" — two bright bell strikes */
+            [[2093, 0.10], [2637, 0.13]].forEach(function (pair) {
+              var f = pair[0], start = t + pair[1];
+              [1, 2.76].forEach(function (mult, idx) {
+                var o = actx.createOscillator(); o.type = "sine"; o.frequency.value = f * mult;
+                var g = actx.createGain();
+                var peak = idx === 0 ? 0.28 : 0.08;
+                g.gain.setValueAtTime(0.0001, start);
+                g.gain.exponentialRampToValueAtTime(peak, start + 0.008);
+                g.gain.exponentialRampToValueAtTime(0.0001, start + 0.55);
+                o.connect(g); g.connect(actx.destination);
+                o.start(start); o.stop(start + 0.6);
+              });
+            });
+          } catch (e) { /* sound is a bonus; never break a transaction over it */ }
+        }
+
+        /* ---------------- helpers ---------------- */
+        var $ = function (id) { return document.getElementById(id); };
+        var toastTimer = null;
+        function toast(msg) {
+          var el = $("toast");
+          el.textContent = msg;
+          el.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(function () { el.classList.remove("show"); }, 3400);
+        }
+        function otherAdult(id) { return id === "jonathan" ? "elizabeth" : "jonathan"; }
+        function digitsOf(n) {
+          return [Math.floor(n / 1000) % 10, Math.floor(n / 100) % 10, Math.floor(n / 10) % 10, n % 10];
+        }
+        function valueOf(d) { return d[0] * 1000 + d[1] * 100 + d[2] * 10 + d[3]; }
+
+        /* ---------------- render: home ---------------- */
+        function renderCards() {
+          var order = ["jonathan", "elizabeth", "piper"];
+          $("cards").innerHTML = order.map(function (id) {
+            var u = users[id];
+            var cls = id === me ? "card me" : "card";
+            var tag = u.later ? '<span class="tag-later">Coming later</span>' : (id === me ? '<span class="tag-later" style="background:var(--green-soft);color:var(--green-deep)">That\u2019s you</span>' : "");
+            return '<article class="' + cls + '">' +
+              '<div class="who"><span class="name">' + u.name + '</span>' +
+              '<span class="flavor">' + u.flavor + '</span>' + tag + '</div>' +
+              '<div class="bals">' +
+                '<div class="bal pts"><div class="k">Points</div><div class="v mono">' + u.points + '</div>' +
+                '<div class="sub">Expire ' + fmt(expiry) + '</div></div>' +
+                '<div class="bal tok"><div class="k">Tokens</div><div class="v mono">' + u.tokens + '</div>' +
+                '<div class="sub">Banked — never expire</div></div>' +
+              '</div></article>';
+          }).join("");
+          $("rules-line").innerHTML =
+            "<strong>100 points</strong> land every <strong>Saturday</strong> (last drop " + fmt(dropDate) +
+            ", next " + fmt(nextDrop) + "). Points you don't spend <strong>expire " + fmt(expiry) + "</strong> — the last day of the month — " +
+            "and don't roll over. Points you <em>receive</em> land as tokens at 1:1 and never expire.";
+        }
+
+        function renderNotices() {
+          var mine = notices.filter(function (n) { return n.to === me; });
+          $("notices").innerHTML = mine.map(function (n) {
+            var e = log.find(function (x) { return x.id === n.entryId; });
+            if (!e) return "";
+            return '<div class="notice"><div class="t">' + users[e.who].name + ' redeemed ' + e.amount + ' tokens</div>' +
+              '<div class="d">“' + escapeHtml(e.reason || "No reason given") + '” · ' + fmtTime(e.ts) + '</div>' +
+              '<button type="button" class="btn" data-ack="' + n.id + '">Add to log</button></div>';
+          }).join("");
+          Array.prototype.forEach.call(document.querySelectorAll("[data-ack]"), function (b) {
+            b.addEventListener("click", function () {
+              var n = notices.find(function (x) { return x.id === Number(b.getAttribute("data-ack")); });
+              if (!n) return;
+              var e = log.find(function (x) { return x.id === n.entryId; });
+              if (e) e.acked = true;
+              notices = notices.filter(function (x) { return x.id !== n.id; });
+              renderNotices(); renderLog();
+              toast("Logged — redemption recorded.");
+            });
+          });
+        }
+
+        function escapeHtml(s) {
+          return String(s).replace(/[&<>"']/g, function (c) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+          });
+        }
+
+        /* ---------------- acting-as ---------------- */
+        function setMe(id) {
+          me = id;
+          $("as-jonathan").setAttribute("aria-pressed", id === "jonathan" ? "true" : "false");
+          $("as-elizabeth").setAttribute("aria-pressed", id === "elizabeth" ? "true" : "false");
+          if (offer && offer.stage === "draft") { /* changing person mid-draft resets the receiver default */ }
+          receiver = otherAdult(me);
+          renderCards(); renderNotices(); renderReceiverChips(); renderPicker(); updateBalCheck();
+        }
+        $("as-jonathan").addEventListener("click", function () { setMe("jonathan"); });
+        $("as-elizabeth").addEventListener("click", function () { setMe("elizabeth"); });
+
+        /* ---------------- tabs ---------------- */
+        var tabBtns = document.querySelectorAll(".tabbar button");
+        function showTab(name) {
+          Array.prototype.forEach.call(tabBtns, function (b) {
+            b.setAttribute("aria-selected", b.getAttribute("data-tab") === name ? "true" : "false");
+          });
+          ["home", "spend", "log"].forEach(function (s) {
+            $("screen-" + s).classList.toggle("active", s === name);
+          });
+          window.scrollTo(0, 0);
+        }
+        Array.prototype.forEach.call(tabBtns, function (b) {
+          b.addEventListener("click", function () { showTab(b.getAttribute("data-tab")); });
+        });
+
+        /* ---------------- spend: digit picker ---------------- */
+        var PLACES = ["1000s", "100s", "10s", "1s"];
+        var digits = [0, 0, 0, 0];
+        var selCol = 3;
+        var receiver = "elizabeth";
+        var reasonVal = "";
+
+        var REASONS = ["Water + Propel packet", "Pick up Piper from school", "Drive out to go get something"];
+        function renderReasonChips() {
+          $("reason-chips").innerHTML = REASONS.map(function (r) {
+            return '<button type="button" data-reason="' + escapeHtml(r) + '" aria-pressed="' + (reasonVal === r ? "true" : "false") + '">' + escapeHtml(r) + '</button>';
+          }).join("");
+          Array.prototype.forEach.call($("reason-chips").querySelectorAll("button"), function (b) {
+            b.addEventListener("click", function () {
+              $("reason").value = b.getAttribute("data-reason");
+              reasonVal = b.getAttribute("data-reason");
+              renderReasonChips();
+            });
+          });
+        }
+        $("reason").addEventListener("input", function () { reasonVal = this.value; renderReasonChips(); });
+
+        function renderReceiverChips() {
+          var opts = [
+            { id: "jonathan", label: "Jonathan" },
+            { id: "elizabeth", label: "Elizabeth" },
+            { id: "piper", label: "Piper — later", disabled: true }
+          ];
+          $("receiver-chips").innerHTML = opts.map(function (o) {
+            if (o.id === me) return "";
+            return '<button type="button" data-recv="' + o.id + '"' + (o.disabled ? " disabled" : "") +
+              ' aria-pressed="' + (receiver === o.id ? "true" : "false") + '">' + o.label + '</button>';
+          }).join("");
+          Array.prototype.forEach.call($("receiver-chips").querySelectorAll("button[data-recv]"), function (b) {
+            b.addEventListener("click", function () { receiver = b.getAttribute("data-recv"); renderReceiverChips(); });
+          });
+        }
+
+        function renderPicker() {
+          var p = $("picker");
+          p.innerHTML = digits.map(function (d, i) {
+            var prev = (d + 9) % 10, next = (d + 1) % 10;
+            return '<div class="col' + (i === selCol ? " sel" : "") + '" data-col="' + i + '">' +
+              '<div class="win"><div class="d side">' + prev + '</div>' +
+              '<div class="d cur">' + d + '</div>' +
+              '<div class="d side">' + next + '</div></div>' +
+              '<div class="place">' + PLACES[i] + '</div></div>';
+          }).join("");
+          p.setAttribute("aria-valuenow", String(valueOf(digits)));
+          p.setAttribute("aria-valuetext", valueOf(digits) + " points");
+          var ti = $("typein");
+          if (document.activeElement !== ti) ti.value = valueOf(digits) === 0 ? "" : String(valueOf(digits));
+          wireColumns();
+          updateBalCheck();
+        }
+
+        function updateBalCheck() {
+          var v = valueOf(digits);
+          var el = $("balcheck");
+          var bal = users[me].points;
+          if (v > bal) {
+            el.textContent = "Not enough — you have " + bal + " points.";
+            el.classList.add("err");
+            $("confirm-btn").disabled = true;
+          } else {
+            el.textContent = "You have " + bal + " points · offering " + v;
+            el.classList.remove("err");
+            $("confirm-btn").disabled = v <= 0;
+          }
+        }
+
+        function stepCol(i, delta) {
+          digits[i] = (digits[i] + delta + 10) % 10;
+          renderPicker();
+        }
+
+        function wireColumns() {
+          Array.prototype.forEach.call($("picker").querySelectorAll(".col"), function (colEl) {
+            var i = Number(colEl.getAttribute("data-col"));
+            var startY = null, acc = 0, moved = false;
+            colEl.addEventListener("pointerdown", function (ev) {
+              selCol = i; startY = ev.clientY; acc = 0; moved = false;
+              colEl.setPointerCapture(ev.pointerId);
+              renderPickerSel();
+            });
+            colEl.addEventListener("pointermove", function (ev) {
+              if (startY === null) return;
+              var dy = startY - ev.clientY;
+              acc += dy; startY = ev.clientY;
+              while (acc >= 26) { stepCol(i, 1); acc -= 26; moved = true; }
+              while (acc <= -26) { stepCol(i, -1); acc += 26; moved = true; }
+            });
+            colEl.addEventListener("pointerup", function () { startY = null; });
+            colEl.addEventListener("pointercancel", function () { startY = null; });
+            colEl.addEventListener("wheel", function (ev) {
+              ev.preventDefault();
+              selCol = i;
+              stepCol(i, ev.deltaY < 0 ? 1 : -1);
+            }, { passive: false });
+            colEl.addEventListener("click", function () { selCol = i; renderPickerSel(); $("picker").focus(); });
+          });
+        }
+        function renderPickerSel() {
+          Array.prototype.forEach.call($("picker").querySelectorAll(".col"), function (c, idx) {
+            c.classList.toggle("sel", idx === selCol);
+          });
+        }
+
+        $("picker").addEventListener("keydown", function (ev) {
+          if (offer && offer.stage !== "draft") return;
+          if (/^[0-9]$/.test(ev.key)) {
+            digits[selCol] = Number(ev.key);
+            if (selCol < 3) selCol++;
+            renderPicker();
+            ev.preventDefault();
+          } else if (ev.key === "ArrowUp") { stepCol(selCol, 1); ev.preventDefault(); }
+          else if (ev.key === "ArrowDown") { stepCol(selCol, -1); ev.preventDefault(); }
+          else if (ev.key === "ArrowLeft") { selCol = Math.max(0, selCol - 1); renderPickerSel(); ev.preventDefault(); }
+          else if (ev.key === "ArrowRight") { selCol = Math.min(3, selCol + 1); renderPickerSel(); ev.preventDefault(); }
+          else if (ev.key === "Backspace") { digits[selCol] = 0; if (selCol > 0) selCol--; renderPicker(); ev.preventDefault(); }
+        });
+
+        $("typein").addEventListener("input", function () {
+          var v = Math.max(0, Math.min(9999, Math.floor(Number(this.value) || 0)));
+          digits = digitsOf(v);
+          renderPicker();
+        });
+
+        /* ---------------- spend: confirm / lock / NFC handoff ---------------- */
+        function setMsg(id, text, kind) {
+          var el = $(id);
+          el.textContent = text || "";
+          el.className = "form-msg" + (kind ? " " + kind : "");
+        }
+
+        $("confirm-btn").addEventListener("click", function () {
+          var v = valueOf(digits);
+          if (v <= 0) { setMsg("spend-msg", "Set an amount above zero first.", "err"); return; }
+          if (v > users[me].points) { setMsg("spend-msg", "You can't spend more points than you have.", "err"); return; }
+          offer = {
+            from: me, to: receiver, amount: v, original: v,
+            reason: reasonVal.trim(), stage: "locked"
+          };
+          $("picker").classList.add("locked");
+          $("spend-actions").hidden = true;
+          $("locked-zone").hidden = false;
+          $("locked-amt").textContent = String(v);
+          $("locked-line").textContent = "Locked in. " + users[offer.to].name + " can't be charged more or less unless they counter — and nothing moves until they answer.";
+          $("to-receiver-btn").textContent = "See it on " + users[offer.to].name + "\u2019s phone";
+          setMsg("spend-msg", "");
+          window.scrollTo(0, document.body.scrollHeight);
+        });
+
+        $("cancel-offer-btn").addEventListener("click", function () {
+          offer = null;
+          unlockSpend();
+          toast("Offer cancelled — nothing was sent.");
+        });
+
+        function unlockSpend() {
+          $("picker").classList.remove("locked");
+          $("spend-actions").hidden = false;
+          $("locked-zone").hidden = true;
+        }
+
+        $("to-receiver-btn").addEventListener("click", function () {
+          if (!offer) return;
+          offer.stage = "review";
+          openOverlay("review");
+        });
+
+        /* ---------------- offer overlay ---------------- */
+        var odDigits = [0, 0, 0, 0];
+        var odSel = 3;
+        var overlayMode = "review"; /* review | counterReview */
+
+        function openOverlay(mode) {
+          overlayMode = mode;
+          odDigits = digitsOf(offer.amount);
+          odSel = 3;
+          var fromU = users[offer.from], toU = users[offer.to];
+          if (mode === "review") {
+            $("phone-tag").textContent = toU.name + "\u2019s phone — incoming offer";
+            $("offer-line").innerHTML = "<strong>" + fromU.name + "</strong> has offered <strong>" + offer.amount + "</strong> for <strong>" +
+              escapeHtml(offer.reason || "a favor") + "</strong>";
+            $("offer-num").classList.add("editable");
+            $("offer-stepper").style.display = "";
+            $("offer-accept").textContent = "Accept";
+          } else {
+            $("phone-tag").textContent = fromU.name + "\u2019s phone — counter-offer";
+            $("offer-line").innerHTML = "<strong>" + toU.name + "</strong> countered at <strong>" + offer.amount + "</strong> for <strong>" +
+              escapeHtml(offer.reason || "a favor") + "</strong>";
+            $("offer-num").classList.remove("editable");
+            $("offer-stepper").style.display = "none";
+            $("offer-accept").textContent = "Accept counter";
+          }
+          $("offer-msg").textContent = "";
+          renderOfferNum();
+          $("overlay").classList.add("open");
+          document.body.style.overflow = "hidden";
+        }
+        function closeOverlay() {
+          $("overlay").classList.remove("open");
+          document.body.style.overflow = "";
+        }
+
+        function renderOfferNum() {
+          var editable = overlayMode === "review";
+          $("offer-num").innerHTML = odDigits.map(function (d, i) {
+            return '<div class="od' + (editable && i === odSel ? " active" : "") + '" data-od="' + i + '">' + d + '</div>';
+          }).join("");
+          if (editable) {
+            Array.prototype.forEach.call($("offer-num").querySelectorAll(".od"), function (el) {
+              el.addEventListener("click", function () {
+                odSel = Number(el.getAttribute("data-od"));
+                renderOfferNum();
+              });
+            });
+          }
+          var v = valueOf(odDigits);
+          var cap = $("offer-cap");
+          if (overlayMode === "review") {
+            if (v !== offer.original) {
+              cap.innerHTML = 'Changed from <span class="mono">' + offer.original + '</span> — this sends back as a <span class="changed">counter-offer</span>. Tap a digit, then use the arrows.';
+              $("offer-accept").textContent = "Counter";
+            } else {
+              cap.textContent = "Tap a digit, then use the arrows to change it.";
+              $("offer-accept").textContent = "Accept";
+            }
+          } else {
+            cap.textContent = users[offer.from].points < v
+              ? "Heads up: " + users[offer.from].name + " only has " + users[offer.from].points + " points — this counter can't be accepted."
+              : "Accept to settle at the countered amount.";
+            $("offer-accept").disabled = users[offer.from].points < v;
+          }
+        }
+
+        $("step-up").addEventListener("click", function () {
+          odDigits[odSel] = (odDigits[odSel] + 1) % 10;
+          renderOfferNum();
+        });
+        $("step-down").addEventListener("click", function () {
+          odDigits[odSel] = (odDigits[odSel] + 9) % 10;
+          renderOfferNum();
+        });
+
+        function settle(amount) {
+          var fromU = users[offer.from], toU = users[offer.to];
+          fromU.points -= amount;
+          toU.tokens += amount; /* received points convert to tokens, 1:1 */
+          addLog({
+            type: "transfer", from: offer.from, to: offer.to, amount: amount,
+            reason: offer.reason,
+            text: fromU.name + " paid " + toU.name + " — " + (offer.reason || "a favor"),
+            countered: amount !== offer.original ? offer.original : null
+          });
+          chaChing();
+          closeOverlay();
+          offer = null;
+          unlockSpend();
+          digits = [0, 0, 0, 0]; selCol = 3;
+          renderPicker(); renderCards(); renderLog();
+          showTab("home");
+          toast("Cha-ching! " + amount + " points spent — " + toU.name + " banked " + amount + " tokens.");
+        }
+
+        $("offer-accept").addEventListener("click", function () {
+          if (!offer) return;
+          var v = valueOf(odDigits);
+          if (overlayMode === "review") {
+            if (v === offer.original) {
+              if (v <= 0) { $("offer-msg").textContent = "An offer of zero can't be accepted — raise it or decline."; return; }
+              settle(v);
+            } else {
+              if (v <= 0) { $("offer-msg").textContent = "A counter of zero isn't a counter — raise it or decline."; return; }
+              offer.amount = v;
+              offer.stage = "countered";
+              closeOverlay();
+              toast(users[offer.to].name + " countered at " + v + " — back to " + users[offer.from].name + " to decide.");
+              openOverlay("counterReview");
+            }
+          } else {
+            settle(v);
+          }
+        });
+
+        $("offer-decline").addEventListener("click", function () {
+          if (!offer) return;
+          var wasCounter = overlayMode === "counterReview";
+          var decliner = wasCounter ? users[offer.from].name : users[offer.to].name;
+          var declinedThing = wasCounter
+            ? " declined the counter from " + users[offer.to].name
+            : " declined an offer from " + users[offer.from].name;
+          addLog({
+            type: "declined", from: offer.from, to: offer.to, amount: offer.amount,
+            reason: offer.reason,
+            text: decliner + declinedThing + " — " + (offer.reason || "a favor")
+          });
+          closeOverlay();
+          offer = null;
+          unlockSpend();
+          renderLog();
+          showTab("log");
+          toast("Declined — no points moved.");
+        });
+
+        /* ---------------- redeem tokens ---------------- */
+        $("redeem-btn").addEventListener("click", function () {
+          var amt = Math.floor(Number($("redeem-amt").value) || 0);
+          var reason = $("redeem-reason").value.trim();
+          if (amt <= 0) { setMsg("redeem-msg", "Enter how many tokens you're redeeming.", "err"); return; }
+          if (amt > users[me].tokens) { setMsg("redeem-msg", "You only have " + users[me].tokens + " tokens banked.", "err"); return; }
+          users[me].tokens -= amt;
+          var e = addLog({
+            type: "redeem", who: me, amount: amt, reason: reason, acked: false,
+            text: users[me].name + " redeemed " + amt + " tokens" + (reason ? " — " + reason : "")
+          });
+          var other = otherAdult(me);
+          notices.push({ id: e.id, to: other, entryId: e.id });
+          $("redeem-amt").value = ""; $("redeem-reason").value = "";
+          setMsg("redeem-msg", "Redeemed. " + users[other].name + " got the notice — it'll sit in the log once they add it.", "ok");
+          chaChing();
+          renderCards(); renderLog();
+        });
+
+        /* ---------------- buy points with tokens ---------------- */
+        $("buy-btn").addEventListener("click", function () {
+          var amt = Math.floor(Number($("buy-amt").value) || 0);
+          if (amt <= 0) { setMsg("buy-msg", "Enter how many tokens to trade in.", "err"); return; }
+          if (amt > users[me].tokens) { setMsg("buy-msg", "You only have " + users[me].tokens + " tokens banked.", "err"); return; }
+          users[me].tokens -= amt;
+          users[me].points += amt;
+          addLog({
+            type: "buy", who: me, amount: amt,
+            text: users[me].name + " traded " + amt + " tokens for " + amt + " points"
+          });
+          $("buy-amt").value = "";
+          setMsg("buy-msg", "Done — " + amt + " points added. Heads up: points still expire " + fmt(expiry) + ".", "ok");
+          chaChing();
+          renderCards(); renderLog();
+        });
+
+        /* ---------------- log ---------------- */
+        function dotClass(t) {
+          return { transfer: "green", redeem: "gold", buy: "gold", allowance: "gray", declined: "red" }[t] || "gray";
+        }
+        function amtLabel(e) {
+          if (e.type === "transfer") return '<span class="mono">' + e.amount + ' pts → tok</span>';
+          if (e.type === "allowance") return '<span class="mono">+' + e.amount + ' pts</span>';
+          if (e.type === "redeem") return '<span class="mono">−' + e.amount + ' tok</span>';
+          if (e.type === "buy") return '<span class="mono">' + e.amount + ' tok → pts</span>';
+          if (e.type === "declined") return '<span class="mono">' + e.amount + ' pts · ✕</span>';
+          return "";
+        }
+        function renderLog() {
+          if (!log.length) {
+            $("log-list").innerHTML = '<div class="empty">Nothing here yet. The first favor will start the record.</div>';
+            return;
+          }
+          $("log-list").innerHTML = log.map(function (e) {
+            var extra = "";
+            if (e.type === "transfer" && e.countered) extra = " Countered from " + e.countered + ".";
+            if (e.type === "redeem") {
+              extra = e.acked
+                ? ' <span class="status-chip done">Logged</span>'
+                : ' <span class="status-chip">Waiting to be logged</span>';
+            }
+            var note = e.note ? '<div class="note-view">' + escapeHtml(e.note) + '</div>' : "";
+            return '<article class="entry"><div class="top"><span class="dot ' + dotClass(e.type) + '"></span>' +
+              '<span class="what">' + escapeHtml(e.text) + '</span>' +
+              '<span class="amt">' + amtLabel(e) + '</span></div>' +
+              '<div class="meta">' + fmtTime(e.ts) + extra + '</div>' + note +
+              '<button type="button" class="addnote" data-note="' + e.id + '">' + (e.note ? "Edit details" : "Add details") + '</button>' +
+              '<div class="note-edit" id="note-edit-' + e.id + '"><label class="lbl" for="note-ta-' + e.id + '" style="font-size:0.8rem;font-weight:700;color:var(--muted)">Details (optional)</label>' +
+              '<textarea id="note-ta-' + e.id + '" placeholder="What was it really for?">' + (e.note ? escapeHtml(e.note) : "") + '</textarea>' +
+              '<button type="button" class="btn" data-save-note="' + e.id + '">Save details</button></div></article>';
+          }).join("");
+          Array.prototype.forEach.call(document.querySelectorAll("[data-note]"), function (b) {
+            b.addEventListener("click", function () {
+              $("note-edit-" + b.getAttribute("data-note")).classList.toggle("open");
+            });
+          });
+          Array.prototype.forEach.call(document.querySelectorAll("[data-save-note]"), function (b) {
+            b.addEventListener("click", function () {
+              var id = Number(b.getAttribute("data-save-note"));
+              var e = log.find(function (x) { return x.id === id; });
+              if (!e) return;
+              e.note = $("note-ta-" + id).value.trim();
+              renderLog();
+              toast("Details saved to the log entry.");
+            });
+          });
+        }
+
+        /* ---------------- init ---------------- */
+        renderReasonChips();
+        renderReceiverChips();
+        renderPicker();
+        renderCards();
+        renderNotices();
+        renderLog();
+      })();
+    </script>
+  </body>
+</html>
