@@ -20,7 +20,52 @@ type EngineUser = {
 
 export async function runWeeklyEngine(user: EngineUser, now = new Date()) {
   const householdId = user.householdId;
-  const marker = user.pointsMarkerAt ?? now;
+  const marker = user.pointsMarkerAt;
+
+  if (marker === null) {
+    // First-ever run for this account. Signup already put this week's
+    // amounts in hand (adults start at 100 points), so the boundary clock
+    // simply starts now — no back-pay and no expiry for the partial week.
+    // A child who has never received a drop gets their first one now: the
+    // drop is their weekly allowance and never waits on a Saturday that
+    // predates them.
+    const firstRunChildren = await prisma.child.findMany({
+      where: { householdId },
+      orderBy: { createdAt: "asc" },
+    });
+    const firstOps: Prisma.PrismaPromise<unknown>[] = [
+      prisma.user.update({
+        where: { id: user.id },
+        data: { pointsMarkerAt: now },
+      }),
+    ];
+    for (const child of firstRunChildren) {
+      if (child.dropMarkerAt !== null) continue;
+      firstOps.push(
+        prisma.child.update({
+          where: { id: child.id },
+          data: {
+            tokens: child.tokens + child.weeklyTokenAmount,
+            dropMarkerAt: now,
+          },
+        })
+      );
+      firstOps.push(
+        prisma.logEntry.create({
+          data: {
+            householdId,
+            kind: "WEEKLY_DROP",
+            text: `${child.name} received the weekly drop of ${tokensText(child.weeklyTokenAmount)}`,
+            amount: child.weeklyTokenAmount,
+            childId: child.id,
+            createdAt: now,
+          },
+        })
+      );
+    }
+    await prisma.$transaction(firstOps);
+    return;
+  }
   const sats = saturdayBoundaries(marker, now);
   const months = monthRollovers(marker, now);
   if (!sats.length && !months.length) return;
