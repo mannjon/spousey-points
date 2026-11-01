@@ -28,6 +28,7 @@ enum BountyStatus {
   PENDING_APPROVAL
   OPEN
   CLAIMED
+  AWAITING_VERIFY
   COMPLETED
   DECLINED
   EXPIRED
@@ -58,6 +59,9 @@ model User {
   tokens              Int      @default(0)
   weeklyDowntimeHours Int      @default(20)
   invitePromptDone    Boolean  @default(false)
+  // Lazy weekly-engine marker: Saturday point grants + month-end expiry are
+  // applied for every boundary after this instant, then it advances to now.
+  pointsMarkerAt      DateTime?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -82,6 +86,8 @@ model Child {
   tokens                 Int       @default(0)
   weeklyAllowanceDollars Float     @default(5)
   weeklyTokenAmount      Int       @default(100)
+  // Lazy weekly-engine marker for the Saturday token drop.
+  dropMarkerAt           DateTime?
   createdAt              DateTime  @default(now())
 
   kidClaims Bounty[] @relation("BountyKidClaim")
@@ -187,6 +193,8 @@ model LogEntry {
   kind        String
   text        String
   amount      Int?
+  note        String?
+  counteredFrom Int?
   createdAt   DateTime  @default(now())
 
   @@index([householdId, createdAt])
@@ -200,10 +208,26 @@ model Notice {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   kind        String
   text        String
+  fromUserId  String?
+  amount      Int?
+  logEntryId  String?
   accepted    Boolean   @default(false)
   createdAt   DateTime  @default(now())
 
   @@index([userId, accepted])
+}
+
+// Per-user "has viewed this log entry" flag. An entry that changed things
+// indirectly for a user (someone else's action, or a system event) carries a
+// dot for that user until a LogSeen row exists.
+model LogSeen {
+  id         String   @id @default(cuid())
+  logEntryId String
+  userId     String
+  seenAt     DateTime @default(now())
+
+  @@unique([logEntryId, userId])
+  @@index([userId])
 }
 
 // A person invited at a user's first login, recorded by screen name before
