@@ -1,0 +1,221 @@
+// Spousey Points — full data model (Phase 1).
+// Everything is household-scoped: a user can only ever see their own household's data.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Version {
+  SPOUSEY
+  SILVER
+  FAMILY
+}
+
+enum OfferStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  COUNTERED
+  CANCELLED
+}
+
+enum BountyStatus {
+  PENDING_APPROVAL
+  OPEN
+  CLAIMED
+  COMPLETED
+  DECLINED
+  EXPIRED
+}
+
+model Household {
+  id        String   @id @default(cuid())
+  name      String?
+  createdAt DateTime @default(now())
+
+  users          User[]
+  children       Child[]
+  offers         Offer[]
+  bounties       Bounty[]
+  logEntries     LogEntry[]
+  notices        Notice[]
+  pendingInvites PendingInvite[]
+}
+
+model User {
+  id                  String   @id @default(cuid())
+  householdId         String
+  household           Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  screenName          String   @unique
+  passwordHash        String
+  version             Version  @default(SPOUSEY)
+  points              Int      @default(100)
+  tokens              Int      @default(0)
+  weeklyDowntimeHours Int      @default(20)
+  invitePromptDone    Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  offersSent       Offer[]     @relation("OfferFrom")
+  offersReceived   Offer[]     @relation("OfferTo")
+  bountiesPosted   Bounty[]    @relation("BountyPostedBy")
+  bountiesApproved Bounty[]    @relation("BountyApprovedBy")
+  bountiesClaimed  Bounty[]    @relation("BountyClaimedBy")
+  bountySeen       BountySeen[]
+  kidApprovals     BountyKidApproval[]
+  logEntries       LogEntry[]  @relation("LogActor")
+  notices          Notice[]
+
+  @@index([householdId])
+}
+
+model Child {
+  id                     String    @id @default(cuid())
+  householdId            String
+  household              Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  name                   String
+  tokens                 Int       @default(0)
+  weeklyAllowanceDollars Float     @default(5)
+  weeklyTokenAmount      Int       @default(100)
+  createdAt              DateTime  @default(now())
+
+  kidClaims Bounty[] @relation("BountyKidClaim")
+
+  @@index([householdId])
+}
+
+// A point offer from one user to another. On acceptance the amount is
+// deducted from the sender's points and lands in the receiver's tokens 1:1.
+model Offer {
+  id           String      @id @default(cuid())
+  householdId  String
+  household    Household   @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  fromUserId   String
+  fromUser     User        @relation("OfferFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUserId     String
+  toUser       User        @relation("OfferTo", fields: [toUserId], references: [id], onDelete: Cascade)
+  amount       Int
+  reason       String?
+  status       OfferStatus @default(PENDING)
+  counterAmount Int?
+  createdAt    DateTime    @default(now())
+  resolvedAt   DateTime?
+
+  @@index([householdId])
+  @@index([toUserId, status])
+}
+
+// A bounty is NOT a transfer: completing an approved bounty EARNS tokens.
+// Nobody's balance is ever debited for a bounty.
+model Bounty {
+  id          String       @id @default(cuid())
+  householdId String
+  household   Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  title       String
+  details     String?
+  value       Int
+  dueDate     DateTime?
+  status      BountyStatus @default(PENDING_APPROVAL)
+
+  postedById String
+  postedBy   User   @relation("BountyPostedBy", fields: [postedById], references: [id], onDelete: Cascade)
+
+  approvedById String?
+  approvedBy   User?   @relation("BountyApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  claimedById String?
+  claimedBy   User?   @relation("BountyClaimedBy", fields: [claimedById], references: [id], onDelete: SetNull)
+
+  // Kid claims: a child claims instead of a user. Both parents must approve
+  // the claim (BountyKidApproval rows) before the child can take the bounty,
+  // and the poster approves the finished work (workVerifiedById).
+  kidClaimChildId String?
+  kidClaimChild   Child?  @relation("BountyKidClaim", fields: [kidClaimChildId], references: [id], onDelete: SetNull)
+
+  workVerifiedById String?
+  completedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  seen        BountySeen[]
+  kidApprovals BountyKidApproval[]
+
+  @@index([householdId, status])
+}
+
+// Per-user "has viewed this bounty" flag (drives the NEW! flagging on the board).
+model BountySeen {
+  id       String   @id @default(cuid())
+  bountyId String
+  bounty   Bounty   @relation(fields: [bountyId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seenAt   DateTime @default(now())
+
+  @@unique([bountyId, userId])
+}
+
+// One row per parent approval of a kid's bounty claim; two distinct parents
+// approving = the kid may take the bounty.
+model BountyKidApproval {
+  id        String   @id @default(cuid())
+  bountyId  String
+  bounty    Bounty   @relation(fields: [bountyId], references: [id], onDelete: Cascade)
+  parentId  String
+  parent    User     @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([bountyId, parentId])
+}
+
+// Fact-only log lines. `text` states the fact; `kind` is a machine tag
+// (e.g. OFFER_ACCEPTED, BOUNTY_EARNED, CHILD_CREDIT, CHILD_DEDUCT, REDEEM,
+// BUY_POINTS, WEEKLY_DROP, LOVE_TAP).
+model LogEntry {
+  id          String    @id @default(cuid())
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  actorId     String?
+  actor       User?     @relation("LogActor", fields: [actorId], references: [id], onDelete: SetNull)
+  subjectUserId String?
+  childId       String?
+  kind        String
+  text        String
+  amount      Int?
+  createdAt   DateTime  @default(now())
+
+  @@index([householdId, createdAt])
+}
+
+model Notice {
+  id          String    @id @default(cuid())
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind        String
+  text        String
+  accepted    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, accepted])
+}
+
+// A person invited at a user's first login, recorded by screen name before
+// they have signed up. Requests can be addressed to them; no tokens are
+// ever sent to or held for a pending invite (tokens never transfer).
+model PendingInvite {
+  id          String    @id @default(cuid())
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  invitedById String
+  screenName  String
+  createdAt   DateTime  @default(now())
+
+  @@index([householdId])
+}
