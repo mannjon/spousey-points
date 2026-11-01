@@ -2,8 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// Slide-to-confirm, the app's own treatment: the thumb sits fully inside
-// the track (5px inset) at rest, mid-slide, and at the far end. Only a
+// Slide-to-confirm, ported from the working app's own mechanism: the
+// thumb's position lives in a ref and is written straight to the DOM
+// (thumb left, fill width in px), and the completion check reads that
+// same position — never a rendered state value, which can lag the
+// finger's last move and wrongly spring a full slide back. Only a
 // complete slide fires; a partial slide springs back and does nothing.
 export default function SlideToConfirm({
   label,
@@ -20,81 +23,98 @@ export default function SlideToConfirm({
   resetKey: number;
   onComplete: () => void;
 }) {
-  const THUMB = 56;
   const INSET = 5;
   const trackRef = useRef<HTMLDivElement>(null);
-  const drag = useRef<{ pointerId: number; startX: number; startPos: number } | null>(null);
+  const thumbRef = useRef<HTMLDivElement>(null);
+  const fillRef = useRef<HTMLDivElement>(null);
+  const posRef = useRef(0);
+  const dragRef = useRef<{ startX: number; startPos: number } | null>(null);
   const firedRef = useRef(false);
-  const [x, setX] = useState(0);
-  const [dragging, setDragging] = useState(false);
+  const [spring, setSpring] = useState(true);
+
+  function maxTravel() {
+    const track = trackRef.current;
+    const thumb = thumbRef.current;
+    if (!track || !thumb) return 0;
+    return Math.max(0, track.clientWidth - thumb.offsetWidth - INSET * 2);
+  }
+
+  function setPos(x: number, animate: boolean) {
+    const track = trackRef.current;
+    const thumb = thumbRef.current;
+    const fill = fillRef.current;
+    if (!track || !thumb || !fill) return;
+    posRef.current = x;
+    setSpring(animate);
+    thumb.style.left = `${INSET + x}px`;
+    fill.style.width = `${x + thumb.offsetWidth + INSET}px`;
+    const mt = maxTravel();
+    track.setAttribute("aria-valuenow", String(mt ? Math.round((x / mt) * 100) : 0));
+  }
 
   useEffect(() => {
-    setX(0);
     firedRef.current = false;
+    setPos(0, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetKey]);
-
-  function maxX() {
-    const w = trackRef.current?.clientWidth ?? 0;
-    return Math.max(0, w - THUMB - INSET * 2);
-  }
 
   function onPointerDown(e: React.PointerEvent) {
     if (disabled || firedRef.current) return;
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    drag.current = { pointerId: e.pointerId, startX: e.clientX, startPos: x };
-    setDragging(true);
-  }
-
-  function onPointerMove(e: React.PointerEvent) {
-    const d = drag.current;
-    if (!d || e.pointerId !== d.pointerId) return;
-    const next = Math.min(maxX(), Math.max(0, d.startPos + (e.clientX - d.startX)));
-    setX(next);
-  }
-
-  function onPointerUp(e: React.PointerEvent) {
-    const d = drag.current;
-    if (!d || e.pointerId !== d.pointerId) return;
-    drag.current = null;
-    setDragging(false);
-    const max = maxX();
-    if (max > 0 && x >= max * 0.98) {
-      setX(max);
-      firedRef.current = true;
-      onComplete();
-    } else {
-      setX(0);
+    e.preventDefault();
+    setSpring(false);
+    dragRef.current = { startX: e.clientX, startPos: posRef.current };
+    try {
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      // Capture is a bonus.
     }
   }
 
-  const max = maxX();
-  const pct = max > 0 ? Math.min(100, ((x + THUMB) / (max + THUMB + INSET * 2)) * 100) : 0;
+  function onPointerMove(e: React.PointerEvent) {
+    const d = dragRef.current;
+    if (!d) return;
+    setPos(Math.min(maxTravel(), Math.max(0, d.startPos + (e.clientX - d.startX))), false);
+  }
+
+  function endDrag(cancelled: boolean) {
+    if (!dragRef.current) return;
+    dragRef.current = null;
+    const mt = maxTravel();
+    if (!cancelled && mt > 0 && posRef.current >= mt - 2) {
+      setPos(mt, true);
+      firedRef.current = true;
+      onComplete();
+    } else {
+      setPos(0, true);
+    }
+  }
 
   return (
     <div
       ref={trackRef}
-      className={`slide-confirm${gold ? " gold" : ""}${disabled ? " disabled" : ""}${dragging ? "" : " spring"}`}
+      className={`slide-confirm${gold ? " gold" : ""}${disabled ? " disabled" : ""}${spring ? " spring" : ""}`}
       role="slider"
       aria-label={label}
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-valuenow={max > 0 ? Math.round((x / max) * 100) : 0}
+      aria-valuenow={0}
       aria-disabled={disabled}
       style={{
         ...(inRow ? { flex: 1, marginTop: 0 } : {}),
         ...(disabled ? { pointerEvents: "none" as const } : {}),
       }}
     >
-      <div className="slide-fill" style={{ width: `${pct}%` }} />
+      <div ref={fillRef} className="slide-fill" style={{ width: 61 }} />
       <span className="slide-label">{label}</span>
       <div
+        ref={thumbRef}
         className="slide-thumb"
         aria-hidden="true"
-        style={{ left: INSET + x }}
+        style={{ left: INSET }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
+        onPointerUp={() => endDrag(false)}
+        onPointerCancel={() => endDrag(true)}
       >
         »
       </div>

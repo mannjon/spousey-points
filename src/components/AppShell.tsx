@@ -123,7 +123,10 @@ export default function AppShell({
       <button
         type="button"
         aria-selected={tab === key}
-        onClick={() => setTab(key)}
+        onClick={() => {
+          setTab(key);
+          window.scrollTo(0, 0);
+        }}
         style={{ position: "relative" }}
       >
         {label}
