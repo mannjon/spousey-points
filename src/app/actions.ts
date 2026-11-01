@@ -39,20 +39,29 @@ export async function login(fd: FormData) {
 export async function signup(fd: FormData) {
   const screenName = str(fd, "screenName");
   const password = str(fd, "password");
-  if (!screenName || !password) redirect("/signup?error=1");
+  if (!screenName || !password) redirect("/login?error=missing");
 
   const existing = await prisma.user.findUnique({ where: { screenName } });
-  if (existing) redirect("/signup?error=taken");
+  if (existing) redirect("/login?error=taken");
 
-  const kidsAtHome = fd.get("kidsAtHome") === "on";
+  const kidsAtHome = str(fd, "kids") === "yes";
   const version = classify({
     kidsAtHome,
-    age: num(fd, "age"),
-    retired: fd.get("retired") === "on",
-    freeTimeHours: num(fd, "freeTimeHours"),
+    ageBand: str(fd, "age"),
+    workStatus: str(fd, "work"),
+    freeTimeBand: str(fd, "freetime"),
   });
 
-  const household = await prisma.household.create({ data: {} });
+  // If this screen name was invited at someone's first login, the new user
+  // joins that household instead of starting a new one.
+  const invite = await prisma.pendingInvite.findFirst({
+    where: { screenName: { equals: screenName, mode: "insensitive" } },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const household = invite
+    ? { id: invite.householdId }
+    : await prisma.household.create({ data: {} });
   const user = await prisma.user.create({
     data: {
       householdId: household.id,
@@ -64,14 +73,21 @@ export async function signup(fd: FormData) {
     },
   });
 
-  if (version === "FAMILY") {
+  if (!invite && version === "FAMILY") {
     const names = str(fd, "childNames")
       .split(/[\n,]/)
       .map((n) => n.trim())
       .filter(Boolean);
+    const allowance = Number.parseFloat(str(fd, "childAllowance"));
     for (const name of names) {
       await prisma.child.create({
-        data: { householdId: household.id, name, tokens: 0 },
+        data: {
+          householdId: household.id,
+          name,
+          tokens: 0,
+          weeklyAllowanceDollars:
+            Number.isFinite(allowance) && allowance >= 0 ? allowance : 5,
+        },
       });
     }
   }
@@ -91,16 +107,22 @@ export async function logout() {
 export async function inviteSend(fd: FormData) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  const names = str(fd, "invitees")
-    .split(/[\n,]/)
-    .map((n) => n.trim())
-    .filter(Boolean);
+  const names = [str(fd, "inviteName") || str(fd, "inviteContact")].filter(Boolean);
   for (const screenName of names) {
     await prisma.pendingInvite.create({
       data: {
         householdId: user.householdId,
         invitedById: user.id,
         screenName,
+      },
+    });
+    await prisma.logEntry.create({
+      data: {
+        householdId: user.householdId,
+        actorId: user.id,
+        kind: "INVITE",
+        text: `Invite sent to ${screenName}`,
+        amount: 0,
       },
     });
   }
@@ -125,13 +147,13 @@ export async function updateDowntime(fd: FormData) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   const hours = num(fd, "weeklyDowntimeHours");
-  if (hours !== null && hours >= 0) {
+  if (hours !== null && hours > 0) {
     await prisma.user.update({
       where: { id: user.id },
       data: { weeklyDowntimeHours: hours },
     });
   }
-  revalidatePath("/settings");
+  revalidatePath("/");
 }
 
 export async function changeVersion(fd: FormData) {
@@ -144,6 +166,5 @@ export async function changeVersion(fd: FormData) {
       data: { version },
     });
   }
-  revalidatePath("/settings");
   revalidatePath("/");
 }

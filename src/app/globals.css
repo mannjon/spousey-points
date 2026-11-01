@@ -1,81 +1,769 @@
-@import "tailwindcss";
+/* Spousey Points — styles ported verbatim from the current app's export
+   (spousey-points.html). Values, spacing, and treatments are the app's own;
+   do not approximate or restyle. Texture images extracted from the export
+   into /public/textures. */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Great+Vibes&family=IBM+Plex+Mono:wght@500;600;700&family=Rye&display=swap');
 
-:root {
-  --bg: #fdf6ec;
-  --panel: #ffffff;
-  --ink: #3a2a20;
-  --accent: #b4552d;
-  --accent-ink: #ffffff;
-  --gold: #d4a017;
-  --line: #e5d9c5;
-}
+      :root {
+        --bg: #edf0ea;
+        --surface: #ffffff;
+        --surface-2: #f3f5f0;
+        --ink: #182420;
+        --muted: #5b6a61;
+        --line: #d6ddd1;
+        --green: #177a4c;
+        --green-deep: #0d5c38;
+        --green-soft: #e2f1e7;
+        --red: #c23a2a;
+        --red-soft: #fbe9e5;
+        --gold: #a8741a;
+        --gold-soft: #f8ecd2;
+        --rose: #c2255c;
+        --rose-deep: #9c1c48;
+        --rose-soft: #fbe3ec;
+        --land-top: #fff6ef;
+        --land-bottom: #fadfe9;
+        --land-card: #fffdfb;
+        --land-ink: #43182a;
+        --reel: #141a17;
+        --reel-digit: #f2f5f0;
+        --reel-dim: #5f6f66;
+        --shadow: 0 10px 30px rgba(24, 36, 32, 0.10);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0e130f;
+          --surface: #1a211c;
+          --surface-2: #212a23;
+          --ink: #eaf0ea;
+          --muted: #9db0a3;
+          --line: #2e3a31;
+          --green: #3cb179;
+          --green-deep: #2b8f5e;
+          --green-soft: #173527;
+          --red: #e0654f;
+          --red-soft: #3a201a;
+          --gold: #dfae4a;
+          --gold-soft: #33290f;
+          --rose: #ec6f9c;
+          --rose-deep: #f08bb0;
+          --rose-soft: #3d1626;
+          --land-top: #220a12;
+          --land-bottom: #3a0f1f;
+          --land-card: #2c121d;
+          --land-ink: #fbe9ef;
+          --reel: #050807;
+          --reel-digit: #f2f5f0;
+          --reel-dim: #5f6f66;
+          --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+        }
+      }
+      * { box-sizing: border-box; }
+      html { -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Bricolage Grotesque", system-ui, -apple-system, "Segoe UI", sans-serif;
+        line-height: 1.45;
+      }
+      .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace; }
+      /* Bottom clearance = the tab bar's ACTUAL height + one common
+         18px. The bar is 50px tall on its own (1px top border +
+         49px buttons) PLUS whatever safe-area inset the device adds
+         underneath it via its own padding-bottom: env(...) — on a
+         phone that inset grows the bar well past 68px, which is why
+         a flat 68px here let the bar swallow the last content.
+         Adding the same env() here keeps the gap at exactly 18px
+         on every device: last element fully visible above the bar,
+         no dead band beyond the 18px. */
+      .wrap { max-width: 560px; margin: 0 auto; padding: 18px 16px calc(68px + env(safe-area-inset-bottom, 0px)); }
+      h1, h2, h3 { margin: 0; line-height: 1.15; }
+      button { font: inherit; cursor: pointer; }
+      button:disabled { cursor: not-allowed; opacity: 0.45; }
+      :focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 
-.theme-silver {
-  --bg: #f2f3f5;
-  --panel: #ffffff;
-  --ink: #23272e;
-  --accent: #5b6470;
-  --accent-ink: #ffffff;
-  --gold: #9aa3ad;
-  --line: #d8dce1;
-}
+      /* ---------- top bar (settings gear only — no person switcher) ---------- */
+      .topbar { display: flex; align-items: center; margin-bottom: 18px; }
 
-.theme-spousey {
-  --bg: #fdf6ec;
-  --panel: #ffffff;
-  --ink: #3a2a20;
-  --accent: #b4552d;
-  --accent-ink: #ffffff;
-  --gold: #d4a017;
-  --line: #e5d9c5;
-}
+      /* ---------- balance cards ---------- */
+      .cards { display: grid; gap: 18px; }
+      .card {
+        background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+        padding: 18px; box-shadow: var(--shadow);
+      }
+      .card.me { border-color: var(--green); border-width: 2px; padding: 18px; }
+      .card .who { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+      .card .name { font-size: 1.25rem; font-weight: 800; }
+      .card .flavor { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+      .tag-later {
+        font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+        background: var(--gold-soft); color: var(--gold); border-radius: 999px; padding: 3px 9px;
+      }
+      .bals { display: flex; gap: 12px; margin-top: 18px; }
+      .bal { flex: 1; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+      .bal .k { font-size: 0.74rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+      .bal .v { font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
+      .bal .v small { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+      .bal.pts .v { color: var(--green-deep); }
+      @media (prefers-color-scheme: dark) { .bal.pts .v { color: var(--green); } }
+      .bal.tok .v { color: var(--gold); }
+      .bal .sub { font-size: 0.76rem; color: var(--muted); }
 
-.theme-family {
-  --bg: #fdf3e3;
-  --panel: #fffdf8;
-  --ink: #43302a;
-  --accent: #c2691e;
-  --accent-ink: #ffffff;
-  --gold: #e0a92e;
-  --line: #ecd9bd;
-}
+      .rules-line { margin: 18px 0 0; font-size: 0.86rem; color: var(--muted); }
+      .rules-line strong { color: var(--ink); }
 
-body {
-  background: var(--bg);
-  color: var(--ink);
-}
+      /* ---------- panels ---------- */
+      .panel {
+        background: var(--surface); border: 1px solid var(--line); border-radius: 18px;
+        padding: 18px; box-shadow: var(--shadow); margin-top: 18px;
+      }
+      .panel h2 { font-size: 1.15rem; font-weight: 800; }
+      .panel .desc { font-size: 0.9rem; color: var(--muted); margin: 8px 0 0; }
+      .field { margin-top: 18px; }
+      .field label { display: block; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+      input[type="text"], input[type="number"], textarea {
+        width: 100%; font: inherit; color: var(--ink);
+        background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
+        padding: 11px 12px;
+      }
+      textarea { resize: vertical; min-height: 62px; }
+      .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+      .chips button {
+        border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+        border-radius: 999px; padding: 6px 12px; font-size: 0.86rem; font-weight: 600;
+      }
+      .chips button[aria-pressed="true"] { background: var(--green-soft); border-color: var(--green); color: var(--green-deep); }
+      @media (prefers-color-scheme: dark) { .chips button[aria-pressed="true"] { color: var(--green); } }
 
-.font-script {
-  font-family: var(--font-script), cursive;
-}
+      .amtrow { display: flex; gap: 10px; align-items: stretch; }
+      .amtrow input { flex: 1; font-size: 1.2rem; font-weight: 700; text-align: center; }
 
-.panel {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 18px;
-}
+      .btn {
+        border: 0; border-radius: 12px; padding: 13px 20px;
+        font-weight: 800; font-size: 1rem; letter-spacing: 0.01em;
+        background: var(--ink); color: var(--bg);
+      }
+      .btn:active { transform: translateY(1px); }
+      .btn.green { background: var(--green); color: #fff; }
+      .btn.green:hover { background: var(--green-deep); }
+      .btn.red { background: var(--red); color: #fff; }
+      .btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
+      .btn.block { width: 100%; }
+      .btnrow { display: flex; gap: 12px; margin-top: 18px; }
+      .btnrow .btn { flex: 1; }
+      .form-msg { font-size: 0.88rem; margin-top: 12px; margin-bottom: 0; min-height: 1.2em; }
+      .form-msg:empty { margin-top: 0; min-height: 0; }
+      .form-msg.err { color: var(--red); font-weight: 600; }
+      .form-msg.ok { color: var(--green-deep); font-weight: 600; }
+      @media (prefers-color-scheme: dark) { .form-msg.ok { color: var(--green); } }
 
-.btn-accent {
-  background: var(--accent);
-  color: var(--accent-ink);
-  border-radius: 8px;
-  padding: 10px 18px;
-  font-weight: 600;
-}
+      /* ---------- notices ---------- */
+      .notice {
+        border: 1.5px dashed var(--gold); background: var(--gold-soft);
+        border-radius: 14px; padding: 18px; margin-top: 18px;
+      }
+      .notice .t { font-weight: 800; }
+      .notice .d { font-size: 0.9rem; margin-top: 6px; }
+      .notice .btn { margin-top: 12px; background: var(--gold); color: #fff; padding: 9px 16px; font-size: 0.92rem; }
 
-.input {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 10px 12px;
-  width: 100%;
-  color: var(--ink);
-}
+      /* Balances top area: breathing room above AND below, so nothing
+         butts up against the top bar or the balance cards */
+      #notices:not(:empty) { display: grid; gap: 18px; margin: 0 0 18px; }
+      #notices .notice { margin-top: 0; }
+      #notices + .cards { margin-top: 0; }
 
-.coin {
-  border-radius: 9999px;
-  background: radial-gradient(circle at 35% 30%, #ffe98a, #e9b949 55%, #b8860b);
-  border: 2px solid #a87408;
-  box-shadow: inset 0 0 0 3px rgba(255, 244, 190, 0.7);
-}
+      /* ---------- sheriff badges (Balances) ---------- */
+      .bounty-badges {
+        border: 1.5px dashed var(--gold); background: var(--gold-soft);
+        border-radius: 16px; padding: 18px;
+      }
+      .bounty-badges .bb-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+      .bounty-badges .bb-title { font-weight: 800; font-size: 1rem; }
+      .bounty-badges .bb-hint { font-size: 0.82rem; color: var(--muted); }
+      .bounty-badges .bb-row { display: flex; flex-wrap: wrap; gap: 18px 16px; padding-top: 18px; }
+      .sheriff-badge {
+        border: 0; background: transparent; padding: 0; width: 92px;
+        display: flex; flex-direction: column; align-items: center; gap: 10px;
+        color: var(--ink); -webkit-tap-highlight-color: transparent;
+      }
+      .sheriff-badge .badge-art { position: relative; width: 84px; height: 84px; flex: none; filter: drop-shadow(0 4px 7px rgba(90, 58, 0, 0.35)); transition: transform 0.15s ease; }
+      .sheriff-badge:active .badge-art { transform: translateY(1px) scale(0.97); }
+      .sheriff-badge svg { display: block; width: 84px; height: 84px; }
+      .sheriff-badge .badge-value {
+        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+        font-family: "IBM Plex Mono", monospace; font-weight: 700; color: #4d2f00;
+        font-size: 1.45rem; line-height: 1; padding-bottom: 2px;
+      }
+      .sheriff-badge .badge-value.long { font-size: 1.05rem; }
+      .sheriff-badge .badge-cap { font-size: 0.74rem; font-weight: 700; line-height: 1.3; text-align: center; color: var(--ink); }
+      .sheriff-badge .badge-cap .badge-status { display: block; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold); }
+      .bounty-card.flash { outline: 3px solid #3d3d3d; outline-offset: 2px; }
+
+      /* ---------- digit picker (spender) ---------- */
+      .picker-zone { margin-top: 18px; text-align: center; }
+      .picker {
+        display: inline-flex; gap: 8px; background: var(--reel);
+        padding: 14px; border-radius: 16px; box-shadow: inset 0 2px 14px rgba(0,0,0,0.6);
+        touch-action: none; user-select: none; -webkit-user-select: none;
+      }
+      .picker.locked { opacity: 0.75; pointer-events: none; }
+      .col { width: 62px; cursor: ns-resize; border-radius: 10px; padding: 2px 0; touch-action: none; }
+      .col.sel { box-shadow: 0 0 0 2px var(--green) inset; background: rgba(255,255,255,0.05); }
+      .col.spinning { background: rgba(255,255,255,0.07); }
+      .col.fast .d.cur { color: #fff; }
+      .col.fast .win { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent); mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent); }
+      .col .win {
+        height: 132px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        -webkit-mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
+        mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
+      }
+      .col .d { font-family: "IBM Plex Mono", monospace; font-weight: 700; line-height: 44px; height: 44px; }
+      .col .d.side { font-size: 1.5rem; color: var(--reel-dim); }
+      .col .d.cur { font-size: 2.6rem; color: var(--reel-digit); }
+      .col .place { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; color: var(--reel-dim); text-transform: uppercase; margin-top: 6px; font-family: "IBM Plex Mono", monospace; }
+      .picker-cap { font-size: 0.85rem; color: var(--muted); margin-top: 18px; }
+      .balcheck { font-size: 0.92rem; margin-top: 12px; font-weight: 600; }
+      .balcheck.err { color: var(--red); }
+
+      .locked-card { text-align: center; padding: 18px 0 0; }
+      .locked-card .big { font-size: 3rem; font-weight: 700; }
+      .locked-card .big small { font-size: 1rem; color: var(--muted); font-weight: 600; }
+      .nfc-pulse {
+        width: 74px; height: 74px; margin: 0 auto 18px; border-radius: 50%;
+        border: 2px solid var(--green); display: flex; align-items: center; justify-content: center;
+        font-family: "IBM Plex Mono", monospace; font-weight: 700; font-size: 0.7rem; color: var(--green-deep);
+        animation: pulse 1.6s ease-in-out infinite;
+      }
+      @media (prefers-color-scheme: dark) { .nfc-pulse { color: var(--green); } }
+      @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(23,122,76,0.35); } 50% { box-shadow: 0 0 0 14px rgba(23,122,76,0); } }
+      @media (prefers-reduced-motion: reduce) { .nfc-pulse { animation: none; } .btn:active { transform: none; } }
+
+      /* ---------- offer overlay ---------- */
+      .overlay {
+        position: fixed; inset: 0; z-index: 40; background: var(--bg);
+        overflow-y: auto; display: none;
+      }
+      .overlay.open { display: block; }
+      .overlay .inner { max-width: 560px; margin: 0 auto; padding: 18px 16px; text-align: center; }
+      .phone-tag { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+      .offer-line { font-size: 1.3rem; font-weight: 600; margin-top: 18px; }
+      .offer-line strong { font-weight: 800; }
+      .offer-num-zone { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 18px 0; }
+      .offer-num {
+        display: inline-flex; gap: 6px; background: var(--reel); padding: 18px 16px; border-radius: 16px;
+        box-shadow: inset 0 2px 14px rgba(0,0,0,0.6);
+      }
+      .offer-num .od {
+        font-family: "IBM Plex Mono", monospace; font-weight: 700; font-size: 3.4rem; line-height: 1;
+        color: var(--reel-digit); width: 52px; text-align: center; border-radius: 8px; padding: 6px 0;
+      }
+      .offer-num.editable .od { cursor: pointer; }
+      .offer-num .od.active { box-shadow: 0 0 0 2px var(--green); background: rgba(255,255,255,0.07); color: #fff; }
+      .stepper { display: flex; flex-direction: column; gap: 10px; }
+      .stepper button {
+        width: 52px; height: 52px; border-radius: 12px; border: 1.5px solid var(--line);
+        background: var(--surface); color: var(--ink); font-size: 1.3rem; font-weight: 800; line-height: 1;
+        box-shadow: var(--shadow);
+      }
+      .stepper button:active { transform: translateY(1px); }
+      .offer-cap { font-size: 0.88rem; color: var(--muted); }
+      .offer-cap .changed { color: var(--gold); font-weight: 700; }
+      .overlay .btnrow { max-width: 420px; margin-left: auto; margin-right: auto; }
+      .overlay .btnrow .btn { padding: 16px 20px; font-size: 1.1rem; }
+
+      /* ---------- log ---------- */
+      .log-list { display: grid; gap: 18px; margin-top: 18px; }
+      .entry { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+      .entry .top { display: flex; align-items: flex-start; gap: 9px; flex-wrap: wrap; }
+      .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; margin-top: 6px; }
+      .dot.green { background: var(--green); } .dot.gold { background: var(--gold); } .dot.red { background: var(--red); } .dot.gray { background: var(--muted); }
+      .entry .what { font-weight: 700; flex: 1; min-width: 140px; }
+      .entry .amt { font-weight: 700; font-size: 1.05rem; }
+      .entry .meta { font-size: 0.84rem; color: var(--muted); margin-top: 6px; }
+      .entry .note-view { font-size: 0.9rem; margin-top: 12px; background: var(--surface-2); border-radius: 8px; padding: 8px 10px; }
+      .entry .addnote { margin-top: 12px; border: 0; background: none; color: var(--green-deep); font-weight: 700; font-size: 0.88rem; padding: 0; }
+      @media (prefers-color-scheme: dark) { .entry .addnote { color: var(--green); } }
+      .entry .note-edit { margin-top: 12px; display: none; }
+      .entry .note-edit.open { display: block; }
+      .entry .note-edit .btn { margin-top: 12px; padding: 9px 16px; font-size: 0.9rem; }
+      .status-chip { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 999px; padding: 2px 8px; background: var(--gold-soft); color: var(--gold); }
+      .status-chip.done { background: var(--green-soft); color: var(--green-deep); }
+      @media (prefers-color-scheme: dark) { .status-chip.done { color: var(--green); } }
+      .empty { text-align: center; color: var(--muted); padding: 18px 10px; font-size: 0.95rem; }
+
+      .dot.rose { background: var(--rose); }
+
+      /* ---------- landing / login ---------- */
+      .landing {
+        position: fixed; inset: 0; z-index: 50; overflow-y: auto;
+        background: linear-gradient(180deg, var(--land-top) 0%, var(--land-bottom) 100%);
+        color: var(--land-ink);
+        display: flex; flex-direction: column; align-items: center;
+        padding: 18px;
+        transition: opacity 0.45s ease, visibility 0.45s ease;
+      }
+      .landing.gone { opacity: 0; visibility: hidden; pointer-events: none; }
+      .invite-btn {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: var(--land-card); color: var(--rose-deep);
+        border: 1.5px solid var(--rose); border-radius: 999px;
+        padding: 7px 14px 7px 9px; font-weight: 800; font-size: 0.9rem;
+        box-shadow: var(--shadow);
+      }
+      .invite-btn:active { transform: translateY(1px); }
+      .invite-btn svg { display: block; }
+      .landing .invite-btn { position: absolute; top: 16px; left: 16px; z-index: 3; }
+      .invite-btn.small { padding: 5px 11px 5px 7px; font-size: 0.82rem; margin-left: auto; }
+      .land-hearts { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+      .land-hearts svg { position: absolute; opacity: 0.5; animation: floaty 7s ease-in-out infinite; }
+      .land-hearts svg:nth-child(1) { top: 12%; left: 8%; width: 26px; }
+      .land-hearts svg:nth-child(2) { top: 22%; right: 10%; width: 18px; animation-delay: -2s; }
+      .land-hearts svg:nth-child(3) { top: 40%; left: 14%; width: 15px; animation-delay: -4s; }
+      .land-hearts svg:nth-child(4) { top: 34%; right: 16%; width: 30px; animation-delay: -1s; opacity: 0.35; }
+      .land-hearts svg:nth-child(5) { top: 58%; right: 7%; width: 16px; animation-delay: -3s; }
+      .land-hearts svg:nth-child(6) { top: 64%; left: 6%; width: 20px; animation-delay: -5s; opacity: 0.35; }
+      @keyframes floaty { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-12px) rotate(5deg); } }
+      @media (prefers-reduced-motion: reduce) { .land-hearts svg { animation: none; } .landing { transition: none; } }
+      .land-mid { position: relative; z-index: 2; width: 100%; max-width: 420px; margin: auto 0; padding: 18px 0; text-align: center; }
+      .land-title {
+        font-family: "Great Vibes", "Snell Roundhand", cursive;
+        font-weight: 400; font-size: clamp(3.4rem, 15vw, 4.8rem);
+        color: var(--rose-deep); line-height: 1.05; margin: 0;
+        text-shadow: 0 2px 0 rgba(255, 255, 255, 0.45);
+      }
+      @media (prefers-color-scheme: dark) { .land-title { text-shadow: none; } }
+      .land-sub { margin: 12px 0 0; font-size: 1rem; color: var(--land-ink); opacity: 0.85; }
+      .land-sub .h { color: var(--rose); }
+      .login-card {
+        background: var(--land-card); border: 1px solid var(--rose-soft);
+        border-radius: 20px; box-shadow: var(--shadow);
+        padding: 18px; margin-top: 18px; text-align: left;
+      }
+      .login-card .field { margin-top: 18px; }
+      .login-card .field:first-child { margin-top: 0; }
+      .login-card label { color: var(--rose-deep); }
+      .login-card input {
+        width: 100%; font: inherit; padding: 11px 12px; border-radius: 10px;
+        background: var(--surface-2); border: 1px solid var(--line); color: var(--ink);
+      }
+      .btn.rose { background: var(--rose); color: #fff; }
+      .btn.rose:hover { background: var(--rose-deep); }
+      .login-hint { font-size: 0.82rem; color: var(--muted); margin: 12px 0 0; text-align: center; }
+      .coins { position: relative; z-index: 1; width: min(540px, 100%); margin-top: 18px; flex: none; }
+      .coins svg { display: block; width: 100%; height: auto; }
+
+      /* ---------- invite sheet ---------- */
+      .sheet {
+        position: fixed; inset: 0; z-index: 80; display: none;
+        background: rgba(24, 8, 14, 0.55); padding: 18px 16px;
+        overflow-y: auto;
+      }
+      .sheet.open { display: flex; align-items: center; justify-content: center; }
+      .sheet .box {
+        background: var(--surface); border-radius: 20px; box-shadow: var(--shadow);
+        width: 100%; max-width: 420px; padding: 18px; color: var(--ink);
+      }
+      .sheet h2 { font-family: "Great Vibes", cursive; font-weight: 400; font-size: 2.3rem; color: var(--rose-deep); line-height: 1.1; }
+      .sheet .desc { font-size: 0.92rem; color: var(--muted); margin-top: 8px; }
+
+      /* ---------- love tap ---------- */
+      .lovetap-panel { border-color: var(--rose); border-width: 1.5px; }
+      .lovetap-panel h2 { color: var(--rose-deep); display: flex; align-items: center; gap: 8px; }
+      .btn.lovetap { background: var(--rose); color: #fff; font-size: 1.05rem; padding: 15px 20px; }
+      .btn.lovetap:hover { background: var(--rose-deep); }
+      .btn.lovetap:active { transform: scale(0.98); }
+
+      /* ---------- bounties ---------- */
+      .bounty-create { border-color: var(--gold); border-width: 1.5px; }
+      /* Wooden wanted board: a real plank texture — visible grain,
+         knots, plank gaps and warm tonal variation — framed like a
+         board nailed up on a wall. The tile is sized small so the
+         planks run NARROW (about half the width they had at 560px):
+         many fine planks across reads as a notice board, not a
+         fence. Every bounty is a sheet of aged paper pinned to it
+         by its sheriff badge. Extra top padding leaves room for
+         the first row's badges straddling the posters' top edges;
+         the row gap between stacked posters is the one common
+         18px, and a lower poster's badge straddle lands inside
+         the upper poster's own bottom padding, clear of its
+         printed status. */
+      .bounty-list {
+        display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px 16px; margin-top: 18px;
+        padding: 34px 16px 18px; border-radius: 5px;
+        border: 6px solid #3d2410;
+        background-color: #6e451f;
+        background-image:
+          linear-gradient(180deg, rgba(255, 214, 150, 0.10) 0%, rgba(0, 0, 0, 0) 22%, rgba(0, 0, 0, 0.16) 100%),
+          url("/textures/wood.webp");
+        background-size: cover, 280px 280px;
+        background-position: center, center;
+        background-repeat: no-repeat, repeat;
+        box-shadow: inset 0 0 0 2px rgba(255, 205, 130, 0.14), inset 0 4px 22px rgba(20, 9, 0, 0.55), var(--shadow);
+      }
+      .bounty-list .empty { grid-column: 1 / -1; color: #fdf3d8; font-weight: 600; text-shadow: 0 1px 4px rgba(20, 9, 0, 0.85); }
+      /* Posters, standardized: same size and same internal layout in
+         every cell — title, printed status pinned to the bottom.
+         Warm cream paper (real aged-paper texture), corners at the
+         standing ~5px max, soft shadow lifting the sheet off the
+         wood. The SHERIFF BADGE is the pin: it straddles the top
+         edge at the center, half on the wood, half on the paper,
+         and the value rides in its center. Top padding keeps the
+         title clear of the badge's lower half. */
+      .bounty-card {
+        position: relative; cursor: pointer; color: #3a2a14;
+        display: flex; flex-direction: column;
+        min-height: 138px; height: 100%;
+        background-color: #f3e5c3;
+        background-image: url("/textures/poster.webp");
+        background-size: cover; background-position: center;
+        border: 1px solid #3d3d3d; border-radius: 5px;
+        padding: 38px 12px 18px;
+        /* Real drop shadow falling down-RIGHT off the paper onto the
+           wood, so each sheet visibly lifts off the board. */
+        box-shadow: 13px 16px 20px rgba(18, 8, 0, 0.52), 5px 7px 8px rgba(18, 8, 0, 0.38), inset 0 0 18px rgba(146, 110, 52, 0.22);
+      }
+      .bounty-card:nth-child(odd) { transform: rotate(-0.7deg); }
+      .bounty-card:nth-child(even) { transform: rotate(0.7deg); }
+      .bounty-card .poster-badge {
+        position: absolute; top: -27px; left: 50%; transform: translateX(-50%);
+        width: 54px; height: 54px; z-index: 2; pointer-events: none;
+        filter: drop-shadow(0 3px 5px rgba(40, 22, 0, 0.5));
+      }
+      .poster-badge svg, .sheet-badge svg { display: block; width: 100%; height: 100%; }
+      .poster-badge .badge-value, .sheet-badge .badge-value {
+        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+        font-family: "IBM Plex Mono", monospace; font-weight: 700; color: #4d2f00; line-height: 1;
+      }
+      .poster-badge .badge-value { font-size: 0.92rem; }
+      .poster-badge .badge-value.long { font-size: 0.64rem; }
+      .bounty-card .bounty-title {
+        font-family: "Rye", Georgia, "Times New Roman", serif; font-weight: 400;
+        font-size: 0.98rem; line-height: 1.3; color: #33240e; text-align: center;
+        display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+      }
+      .bounty-card .poster-status { margin-top: auto; padding-top: 12px; text-align: center; }
+      /* No ring around a poster in any state: posters used to get a
+         gold box-shadow ring when they were the current user's own,
+         which drew a yellow line OUTSIDE the poster's border. That
+         ring is gone entirely — a poster has exactly one border:
+         the dark gray default above, or the pulsing teal one when
+         unviewed. (.mine now carries no visual difference.) */
+      /* Unviewed posters (current user has not opened this bounty yet):
+         the poster's single border pulses smoothly between a medium
+         teal and a darker, bluer teal for as long as the bounty stays
+         unviewed. The teal border COMPLETELY REPLACES the dark gray
+         default — same border property, no gray showing alongside or
+         under it, and no extra ring or outline outside it. Viewing
+         the bounty (opening its detail) removes the class — the
+         border returns to the dark gray default and the printed
+         status shows again in place of the burst below. */
+      .bounty-card.is-unviewed { border: 3px solid #1db3a4; animation: bounty-teal-pulse 1.6s ease-in-out infinite; box-shadow: 13px 16px 20px rgba(18, 8, 0, 0.52), 5px 7px 8px rgba(18, 8, 0, 0.38), inset 0 0 18px rgba(146, 110, 52, 0.22); outline: none; }
+      @keyframes bounty-teal-pulse { 0%, 100% { border-color: #1db3a4; } 50% { border-color: #0a4d68; } }
+      @media (prefers-reduced-motion: reduce) { .bounty-card.is-unviewed { animation: none; border-color: #0f766e; } }
+      /* Pop-art NEW! burst: sits centered in the poster in place of
+         the status line while the bounty is unviewed. The title and
+         the badge pin above it are untouched. */
+      .bounty-card .poster-newburst { flex: 1; display: flex; align-items: center; justify-content: center; padding-top: 10px; }
+      .new-burst { display: block; width: 118px; height: 72px; flex: none; filter: drop-shadow(0 3px 4px rgba(40, 22, 0, 0.35)); }
+      .new-burst svg { display: block; width: 100%; height: 100%; }
+      /* Materialize: ONLY the poster created by a just-finished
+         Slide to post materializes, once. It is first rendered in
+         the WAITING state below — unformed / not yet visible at
+         its slot — and stays that way while the view scrolls up
+         to the board. Only once the scroll has come fully to rest
+         with the board in place does the waiting class come off
+         and the materialize animation start (see
+         fastScrollToBoardThenMaterialize), so the user actually
+         watches it fade/grow into existence in full view. The
+         standalone `scale` property is animated instead of
+         `transform`, so the poster's standing odd/even tilt is
+         untouched. */
+      .bounty-card.materialize-pending { opacity: 0; scale: 0.92; }
+      .bounty-card.materialize { animation: bounty-materialize 0.6s ease-out 1; }
+      @keyframes bounty-materialize { from { opacity: 0; scale: 0.92; } to { opacity: 1; scale: 1; } }
+      @media (prefers-reduced-motion: reduce) { .bounty-card.materialize { animation: none; } .bounty-card.materialize-pending { opacity: 0; } }
+      /* Bounty detail modal: worn paper sheet on a shaded backdrop */
+      .bounty-modal {
+        position: fixed; inset: 0; z-index: 75; display: none;
+        background: rgba(16, 9, 2, 0.66); padding: 12px 16px; overflow-y: auto;
+      }
+      .bounty-modal.open { display: flex; align-items: center; justify-content: center; }
+      .bounty-modal .sheet-paper {
+        /* margin:auto inside the scrolling flex backdrop: when the
+           sheet grows taller than the screen (approval view), the
+           backdrop scrolls the normal native way instead of the
+           sheet's top/bottom being clipped by centering. */
+        margin: auto;
+        position: relative; width: 100%; max-width: 440px; color: #3a2a14;
+        /* Sheet nearly fills the screen height (small even margins
+           top and bottom) and is divided into TWO HALVES.
+           TOP HALF: the sheriff badge alone, centered in the exact
+           center of that half. BOTTOM HALF: filled top to bottom —
+           title at its top, countdown at its bottom, the rest
+           spread between (see .sheet-half-bottom below). */
+        min-height: calc(100dvh - 24px);
+        display: flex; flex-direction: column;
+        background-color: #f3e5c3;
+        background-image: url("/textures/poster.webp");
+        background-size: cover; background-position: center;
+        border: 1px solid #b08d4f; border-radius: 5px;
+        padding: 0;
+        box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55), inset 0 0 26px rgba(146, 110, 52, 0.22);
+      }
+      #bounty-modal-content { width: 100%; text-align: center; flex: 1; display: flex; flex-direction: column; }
+      /* Each half takes exactly 50% of the sheet and centers its
+         single occupant in both directions. Basis 0 with equal
+         grow makes the halves EXACTLY equal — a percentage basis
+         would grow from the contents' unequal natural heights
+         and bunch everything off-center. */
+      .sheet-half { flex: 1 1 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
+      /* BOTTOM HALF FILLS ITS HALF: the block stretches the full
+         height of the half — title pinned to its top (right under
+         the midline), countdown pinned to its bottom, and the
+         middle lines spread evenly in between. min-height:auto
+         lets this half GROW past 50% when its content is taller
+         (approval form) so nothing is ever clipped; the sheet
+         grows with it and the backdrop scrolls natively. */
+      .sheet-half-bottom { padding: 18px; align-items: stretch; justify-content: flex-start; min-height: auto; }
+      .sheet-bottom-block { width: 100%; flex: 1; display: flex; flex-direction: column; }
+      .sheet-bottom-block .sb-mid {
+        flex: 1 1 auto; display: flex; flex-direction: column;
+        justify-content: space-evenly; gap: 18px; padding: 18px 0;
+      }
+      .sheet-bottom-block .sb-foot { margin-top: auto; }
+      .bounty-modal-close {
+        position: absolute; top: 6px; right: 6px; z-index: 3;
+        width: 36px; height: 36px; border-radius: 50%;
+        border: 1.5px solid #8a6d3b; background: #fff8e6; color: #4d2f00;
+        font-size: 1.25rem; font-weight: 800; line-height: 1;
+      }
+      /* The modal's badge: ONE LARGE sheriff star, ALONE in the
+         TOP HALF of the sheet — centered in the exact center of
+         that half (sheet width ÷ 2, sheet height ÷ 4), paper
+         behind it — and the only badge in the modal. Everything
+         else lives in the bottom half. The × in the extreme
+         top-right corner stays clear of it.
+         SIZE: the star drawing inside its SVG box spans only
+         ~79.4% of the box width (the viewBox has margin around
+         the star and its point knobs: star extent x 10.3–89.7 of
+         100). So the box is set to 330px to make the VISIBLE
+         star itself measure ~260px across
+         (330 × 0.794 ≈ 262). The number scales with it. */
+      .sheet-paper .sheet-badge {
+        position: relative; display: block; width: 330px; height: 330px; margin: 0 auto; flex: none;
+        /* The star drawing's own center sits at 46.55% of its box
+           (star extent y 8.5–84.6 of 100), ~11px above the box
+           center — nudge it down so the VISIBLE star's center
+           lands exactly on the top half's center. */
+        transform: translateY(11px);
+        filter: drop-shadow(0 4px 7px rgba(90, 58, 0, 0.35));
+      }
+      .sheet-badge .badge-value { font-size: 5.6rem; }
+      .sheet-badge .badge-value.long { font-size: 3.8rem; }
+      .sheet-paper .bounty-title { font-family: "Rye", Georgia, "Times New Roman", serif; font-weight: 400; font-size: 1.3rem; color: #33240e; padding-top: 4px; text-align: center; }
+      .sheet-paper .bounty-meta { color: #7a6543; text-align: center; }
+      .sheet-paper .bounty-meta strong { color: #3d2c17; }
+      .sheet-paper .bounty-desc { color: #3d2c17; text-align: center; }
+      .sheet-paper .bstatus { text-align: center; }
+      /* Countdown keeps its full width; its label + timer sit
+         centered together as one group. */
+      .sheet-paper .countdown { justify-content: center; }
+      .sheet-paper .bounty-actions { justify-content: center; }
+      .sheet-paper .approve-box p { text-align: center; }
+      .sheet-paper .approve-grid label { text-align: center; }
+      .sheet-paper .grabbed-by { background: rgba(255, 255, 255, 0.45); border-color: #cbb27a; color: #3d2c17; }
+      .sheet-paper .approve-box p { color: #3d2c17; }
+      .sheet-paper .approve-grid label { color: #7a6543; }
+      /* Log stats */
+      .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 18px; }
+      .stat-cell { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: var(--shadow); }
+      .stat-cell .k { font-size: 0.76rem; font-weight: 700; letter-spacing: 0.03em; color: var(--muted); line-height: 1.3; }
+      .stat-cell .v { font-size: 1.45rem; font-weight: 800; line-height: 1.15; margin-top: 6px; }
+      .bounty-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+      .bounty-title { font-size: 1.15rem; font-weight: 800; line-height: 1.2; }
+      .bounty-meta { font-size: .86rem; color: var(--muted); margin-top: 12px; line-height: 1.5; }
+      .bounty-meta strong { color: var(--ink); }
+      .bounty-desc { font-size: .94rem; margin-top: 12px; }
+      .countdown { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--reel); color: var(--reel-digit); border-radius: 12px; padding: 12px 18px; margin-top: 18px; }
+      .countdown .lbl { font-size: .72rem; letter-spacing: .07em; text-transform: uppercase; color: var(--reel-dim); font-weight: 700; }
+      .countdown .val { font-family: "IBM Plex Mono", monospace; font-weight: 700; font-size: 1.05rem; letter-spacing: .02em; }
+      .countdown.expired { background: var(--red-soft); color: var(--red); border: 1px solid var(--red); }
+      .countdown.expired .lbl { color: var(--red); }
+      .countdown.soon { outline: 2px solid var(--gold); }
+      /* Status on the paper is PRINTED, never a button: letterspaced
+         ink stamped under a printed rule, colored by the ink alone —
+         no fill, no pill, on the posters and in the detail sheet. */
+      .bstatus {
+        display: block; font-size: .72rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+        border-top: 1.5px solid rgba(58, 42, 20, 0.4); padding-top: 12px; color: #4a3a22;
+      }
+      .bstatus.pending { color: #a03d1c; }
+      .bstatus.open { color: #1e6b34; }
+      .bstatus.grabbed { color: #274b9f; }
+      .bstatus.verify { color: #a01c46; }
+      .bstatus.done { color: #4a3a22; }
+      .bstatus.expired { color: #b02a1e; }
+      .bounty-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+      .bounty-actions .btn { padding: 11px 16px; font-size: .94rem; }
+      .bounty-actions .btn.claim { background: var(--gold); color: #fff; flex: 1; }
+      .approve-box { margin-top: 18px; background: var(--gold-soft); border: 1px dashed var(--gold); border-radius: 12px; padding: 18px; }
+      .approve-box p { margin: 0 0 18px; font-size: .88rem; font-weight: 600; }
+      .approve-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+      @media (max-width: 480px){ .approve-grid{ grid-template-columns: 1fr; } }
+      .approve-grid label { font-size: .74rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 10px; }
+      input[type="datetime-local"], input[type="date"] { width: 100%; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 11px; }
+      .bounty-form-grid { display: grid; grid-template-columns: 130px 1fr; gap: 12px; }
+      @media (max-width: 520px){ .bounty-form-grid{ grid-template-columns: 1fr; gap: 18px; } .bounty-form-grid .field{ margin-top: 0; } }
+      .grabbed-by { display: inline-flex; align-items: center; gap: 6px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: .82rem; font-weight: 600; margin-top: 12px; }
+      .grabbed-by .avatar-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; }
+
+      /* ---------- value estimator (Entry / Estimate switch) ---------- */
+      .estimator { margin-top: 18px; background: var(--surface-2); border: 1.5px dashed var(--gold); border-radius: 12px; padding: 18px; }
+      .est-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
+      .est-switch button { border: 0; background: transparent; color: var(--muted); height: 38px; border-radius: 7px; font-weight: 800; font-size: .95rem; }
+      .est-switch button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+      /* Fixed footprint: identical height in Entry and Estimate modes —
+         only the content inside changes, the box never grows or shrinks. */
+      /* One shared swap area under the switch: Entry and Estimate panes
+         take turns in the SAME fixed footprint, sized to the taller pane.
+         Flipping modes only swaps content — nothing else on the page moves. */
+      .swap-body { margin-top: 18px; }
+      /* 392 = the Entry pane's previous full content (374) + the
+         common 18px of inner padding under the type-in field
+         inside the pane (see #spend-entry-pane below), so the
+         field never sits flush on the pane's bottom edge. The
+         toggle row's own 18px gap below the swap area stays —
+         inner padding and the gap outside are separate layers.
+         Entry and Estimate still share this one footprint, so
+         flipping modes moves nothing else on the page. */
+      #spend-swap { height: 392px; }
+      /* The bounty swap area is the SAME footprint as Spend's:
+         one Entry component (dial + type-in) and one Estimate
+         pane take turns in it, exactly as on the Spend form. */
+      #bounty-swap { height: 392px; }
+      .swap-pane { height: 100%; display: flex; flex-direction: column; }
+      .swap-pane[hidden] { display: none; }
+      .swap-pane.est { justify-content: space-between; }
+      .swap-pane.entry .picker-zone { margin-top: 0; }
+      .swap-pane.entry .type-field { margin-top: auto; }
+      /* Spend Entry pane: the common 18px of inner padding under
+         the type-in field, inside the pane — the field's bottom
+         edge sits 18px above the pane's bottom edge, matching
+         the padding schema of Elizabeth's balance card. */
+      #spend-entry-pane { padding-bottom: 18px; }
+      /* Bounty Entry pane: the same common 18px of inner padding
+         under the Reward field, inside the pane. */
+      #bounty-entry-pane { padding-bottom: 18px; }
+      /* Number-entry fields (Spend type-in, bounty Reward): the
+         spacing pass left the label jammed onto the field. Restore
+         the clear gaps around the field — the common 18px between
+         its label and the field — and give the field itself clear
+         internal padding, so the number never sits mushed between
+         its label above and the toggle row below. (The gap below
+         the field is the toggle row's own 18px margin-top.) */
+      .swap-pane.entry .type-field label,
+      #bounty-entry-pane .field label { margin-bottom: 18px; }
+      #typein, #bounty-typein { padding: 18px 12px; }
+      .estimator .picker { padding: 12px; gap: 7px; max-width: 100%; }
+      .estimator .col { width: 57px; }
+      .est-top { height: 20px; flex: none; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .est-top-label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+      .est-top-label.label { font-size: .68rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+      .est-top-label.title { font-size: .98rem; font-weight: 800; color: var(--ink); }
+      .est-top-label.match { font-size: .8rem; font-weight: 600; color: var(--green-deep); }
+      @media (prefers-color-scheme: dark) { .est-top-label.match { color: var(--green); } }
+      .est-field { flex: none; min-width: 0; }
+      .swap-pane.est input[type="number"], .swap-pane.est input[type="text"] { width: 100%; height: 56px; font-size: 1.55rem; font-weight: 800; line-height: 1.1; text-align: center; padding: 8px 6px; background: #ffffff; color: #182420; border: 2px solid var(--gold); border-radius: 10px; box-shadow: 0 0 0 3px var(--gold-soft); }
+      .swap-pane.est input[type="number"]::placeholder, .swap-pane.est input[type="text"]::placeholder { color: #7c887e; font-size: 1rem; font-weight: 600; }
+      .est-bottom { height: 48px; flex: none; display: flex; align-items: stretch; justify-content: center; gap: 10px; }
+      .est-result { display: flex; align-items: center; justify-content: center; text-align: center; width: 100%; }
+      .est-result .big { font-size: 1.45rem; font-weight: 800; line-height: 1; white-space: nowrap; color: var(--ink); }
+      .est-result .big small { font-size: .78rem; font-weight: 700; color: var(--muted); margin-left: 2px; }
+      .est-toggle-row { margin-top: 18px; display: flex; }
+      .est-toggle { flex: 1 1 auto; width: 100%; height: 46px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 10px; padding: 0 12px; font-weight: 700; font-size: .85rem; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
+      .est-toggle[aria-pressed="true"] { background: var(--red-soft); border-color: var(--red); color: var(--red); }
+      .est-toggle .mult { font-family: "IBM Plex Mono", monospace; font-weight: 700; background: var(--surface); border: 1px solid currentColor; border-radius: 999px; padding: 1px 6px; font-size: .76rem; }
+      .downtime-math { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+      .downtime-math .stat { flex: 1; min-width: 120px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+      .downtime-math .stat .k { font-size: .72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+      .downtime-math .stat .v { font-size: 1.25rem; font-weight: 800; margin-top: 6px; }
+
+      /* ---------- slide to confirm ---------- */
+      .slide-confirm { position: relative; height: 54px; margin-top: 18px; border-radius: 12px; background: var(--surface-2); border: 1.5px solid var(--line); overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+      .slide-confirm.disabled { opacity: 0.45; }
+      .slide-confirm .slide-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--green-soft); }
+      .slide-confirm .slide-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.98rem; color: var(--muted); letter-spacing: 0.02em; pointer-events: none; padding-left: 52px; }
+      .slide-confirm .slide-thumb { position: absolute; left: 5px; top: 5px; width: 56px; height: calc(100% - 10px); box-sizing: border-box; border-radius: 9px; background: var(--green); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; font-weight: 800; cursor: grab; touch-action: none; z-index: 1; }
+      .slide-confirm.spring .slide-thumb, .slide-confirm.spring .slide-fill { transition: left 0.25s ease, width 0.25s ease; }
+      .slide-confirm.gold .slide-thumb { background: var(--gold); }
+      .slide-confirm.gold .slide-fill { background: var(--gold-soft); }
+      @media (prefers-reduced-motion: reduce) { .slide-confirm.spring .slide-thumb, .slide-confirm.spring .slide-fill { transition: none; } }
+
+      /* Slider panels (Spend, Post a bounty) follow the same
+         schema as Elizabeth's balance card: the common 18px
+         exists in BOTH layers — the panels keep their normal
+         18px bottom padding, so the slider sits 18px above the
+         panel's own bottom edge (inner padding), AND the wrap's
+         footer clearance (bar height + 18) keeps the panel's
+         bottom edge 18px above the nav (outer padding). Neither
+         layer is funded by shrinking the other. */
+      /* The message line under each slider otherwise keeps the
+         browser's default paragraph bottom margin (~14px) even
+         when empty — stray stacked space inside the panel. */
+      #screen-spend .form-msg, .bounty-create .form-msg { margin-bottom: 0; }
+
+      /* ---------- tab bar ---------- */
+      .tabbar {
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+        background: var(--surface); border-top: 1px solid var(--line);
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+      .tabbar .in { max-width: 560px; margin: 0 auto; display: flex; }
+      .tabbar button {
+        flex: 1; border: 0; background: transparent; color: var(--muted);
+        padding: 13px 6px 11px; font-weight: 700; font-size: 0.95rem;
+        border-top: 3px solid transparent;
+      }
+      .tabbar button[aria-selected="true"] { color: var(--ink); border-top-color: var(--green); }
+      .screen { display: none; }
+      .screen.active { display: block; }
+
+      /* ---------- toast ---------- */
+      .toast {
+        position: fixed; left: 50%; bottom: 86px; transform: translateX(-50%) translateY(20px);
+        background: var(--ink); color: var(--bg); border-radius: 12px; padding: 12px 18px;
+        font-weight: 700; font-size: 0.95rem; opacity: 0; pointer-events: none; z-index: 60;
+        transition: opacity 0.25s ease, transform 0.25s ease; max-width: calc(100vw - 32px); text-align: center;
+        box-shadow: var(--shadow);
+      }
+      .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+      @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+
+      /* ---------- version themes ---------- */
+      body[data-version="family"]{ --bg:#eaf4ec; --surface:#ffffff; --surface-2:#f2f7ef; --ink:#17352a; --muted:#55705f; --line:#cfe0cf; --green:#0f766e; --green-deep:#115e59; --green-soft:#d7f0e6; --rose:#d97706; --rose-deep:#b45309; --rose-soft:#fdeecd; --land-top:#fef9e7; --land-bottom:#cdeecf; --land-card:#fffef8; --land-ink:#17352a; }
+      body[data-version="silver"]{ --bg:#e9edf2; --surface:#fbfcfe; --surface-2:#eef1f6; --ink:#1f2a3a; --muted:#5d6b7f; --line:#cbd5e1; --green:#475569; --green-deep:#334155; --green-soft:#e2e8f0; --rose:#64748b; --rose-deep:#334155; --rose-soft:#e2e8f0; --gold:#8a6d1f; --gold-soft:#f1ecd7; --land-top:#f8fafc; --land-bottom:#cbd5e1; --land-card:#ffffff; --land-ink:#1f2a3a; }
+      @media (prefers-color-scheme: dark){ body[data-version="family"]{ --bg:#0d1f18; --surface:#16281f; --surface-2:#1d3327; --ink:#ecfdf5; --muted:#a7c4b0; --line:#2c4a38; --land-top:#10231a; --land-bottom:#1d3a2a; --land-card:#1a2e22; --land-ink:#ecfdf5; } body[data-version="silver"]{ --bg:#0f172a; --surface:#1e293b; --surface-2:#273449; --ink:#f1f5f9; --muted:#a8b6c6; --line:#3b4c63; --land-top:#111c30; --land-bottom:#263449; --land-card:#1e293b; --land-ink:#f1f5f9; } }
+      body[data-version="silver"] .land-title{ font-family: Georgia, 'Times New Roman', serif; letter-spacing:.01em; }
+      body[data-version="family"] .land-title{ font-family:"Bricolage Grotesque",sans-serif; font-weight:800; font-size:clamp(2.6rem,11vw,3.8rem); }
+      .gear-btn{ margin-left:auto; width:44px; height:44px; border-radius:50%; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:1.35rem; line-height:1; display:inline-flex; align-items:center; justify-content:center; box-shadow:var(--shadow); }
+      .land-version-switch{ position:relative; z-index:2; display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:8px; }
+      .land-version-switch button{ border:1.5px solid var(--line); background:var(--land-card); color:var(--land-ink); border-radius:999px; padding:7px 13px; font-weight:700; font-size:.85rem; }
+      .land-version-switch button[aria-pressed="true"]{ background:var(--ink); color:var(--bg); }
+      .signup-card{ margin-top:18px; }
+      .signup-card h2{ font-size:1.15rem; }
+      select{ width:100%; font:inherit; color:var(--ink); background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:11px 12px; }
+      #settings-sheet #downtime-panel h2{ font-family:"Bricolage Grotesque",sans-serif; font-size:1.15rem; color:var(--ink); }
+      .child-card{ border:2px solid var(--gold); }
+      .token-stepper{ display:flex; flex-direction:column; gap:8px; flex:none; justify-content:center; }
+      .token-stepper button{ width:52px; height:40px; border-radius:10px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:1rem; font-weight:800; line-height:1; box-shadow:var(--shadow); }
+      .token-stepper button:active{ transform:translateY(1px); }
+      .child-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+      .child-actions .btn{ flex:1; padding:11px 14px; }
+      .rate-line{ font-size:.9rem; color:var(--muted); margin-top:10px; }
+      .approval-row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+      .approval-pill{ border:1px solid var(--line); border-radius:999px; padding:5px 11px; font-size:.82rem; font-weight:700; background:var(--surface-2); }
+      .approval-pill.ok{ background:var(--green-soft); border-color:var(--green); color:var(--green-deep); }
+      .ref-list{ margin:10px 0 0; padding-left:20px; font-size:.95rem; }
+      .ref-list li{ margin-top:6px; }
+    
