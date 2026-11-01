@@ -70,6 +70,7 @@ export async function signup(fd: FormData) {
       version,
       points: 100,
       tokens: 0,
+      pointsMarkerAt: new Date(),
     },
   });
 
@@ -80,13 +81,23 @@ export async function signup(fd: FormData) {
       .filter(Boolean);
     const allowance = Number.parseFloat(str(fd, "childAllowance"));
     for (const name of names) {
-      await prisma.child.create({
+      const child = await prisma.child.create({
         data: {
           householdId: household.id,
           name,
-          tokens: 0,
+          tokens: 100,
+          dropMarkerAt: new Date(),
           weeklyAllowanceDollars:
             Number.isFinite(allowance) && allowance >= 0 ? allowance : 5,
+        },
+      });
+      await prisma.logEntry.create({
+        data: {
+          householdId: household.id,
+          kind: "WEEKLY_DROP",
+          text: `${name} received the weekly drop of 100 tokens`,
+          amount: 100,
+          childId: child.id,
         },
       });
     }
