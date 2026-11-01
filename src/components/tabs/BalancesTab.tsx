@@ -94,7 +94,24 @@ export default function BalancesTab({
       setTapMsg({ text: "You're out of points — Love Taps come back with the Saturday drop.", ok: false });
       return;
     }
-    const res = await loveTap(toUserId);
+    let res: Awaited<ReturnType<typeof loveTap>>;
+    try {
+      res = await loveTap(toUserId);
+    } catch {
+      // The tap call itself died — no answer came back at all. Never sit
+      // silent: say so on screen, and reload once so the phone picks up
+      // the app's current code. The session flag keeps it to one reload.
+      setTapMsg({ text: "That tap didn't go through — reloading the app to resync.", ok: false });
+      try {
+        if (!window.sessionStorage.getItem("lt-resync")) {
+          window.sessionStorage.setItem("lt-resync", "1");
+          window.setTimeout(() => window.location.reload(), 1200);
+        }
+      } catch {
+        // Storage unavailable — the message above still shows.
+      }
+      return;
+    }
     if (!res.ok) {
       setTapMsg({ text: res.error, ok: false });
       return;
