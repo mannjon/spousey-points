@@ -34,6 +34,7 @@ function badgeStatus(b: BountyDTO, meId: string): string | null {
 export default function BalancesTab({
   data,
   refresh,
+  patchMe,
   toast,
   openBounty,
   onReviewOffer,
@@ -41,6 +42,7 @@ export default function BalancesTab({
 }: {
   data: AppData;
   refresh: () => Promise<void>;
+  patchMe: (points: number, tokens: number) => void;
   toast: (msg: string) => void;
   openBounty: (b: BountyDTO) => void;
   onReviewOffer: (o: OfferDTO) => void;
@@ -98,6 +100,7 @@ export default function BalancesTab({
       return;
     }
     playSound("chaChing");
+    patchMe(me.points - 1, me.tokens);
     setTapMsg({ text: `Sent! 1 point out, 1 token banked for ${name}.`, ok: true });
     toast(`♥ Love Tap sent — ${name} banked 1 token.`);
     await refresh();
@@ -123,6 +126,7 @@ export default function BalancesTab({
       return;
     }
     playSound("chaChing");
+    patchMe(me.points, me.tokens - amt);
     setRedeemAmt("");
     setRedeemReason("");
     setRedeemMsg({
@@ -148,6 +152,7 @@ export default function BalancesTab({
       return;
     }
     playSound("chaChing");
+    patchMe(me.points + amt, me.tokens - amt);
     setBuyAmt("");
     setBuyMsg({
       text: `Done — ${amt} points added. Heads up: points still expire ${data.expiryLabel}.`,
