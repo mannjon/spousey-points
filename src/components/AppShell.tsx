@@ -76,6 +76,12 @@ export default function AppShell({
     if (d) setData(d);
   }, []);
 
+  // Apply a known balance result to the screen the instant an action
+  // succeeds, instead of waiting on the server round-trip to reflect it.
+  const patchMe = useCallback((points: number, tokens: number) => {
+    setData((d) => ({ ...d, me: { ...d.me, points, tokens } }));
+  }, []);
+
   const openBounty = useCallback(
     (b: BountyDTO) => {
       playSound("pageFlip");
@@ -161,6 +167,7 @@ export default function AppShell({
           <BalancesTab
             data={data}
             refresh={refresh}
+            patchMe={patchMe}
             toast={toast}
             openBounty={openBounty}
             onReviewOffer={(o) =>
