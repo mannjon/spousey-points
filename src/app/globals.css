@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #fdf6ec;
+  --panel: #ffffff;
+  --ink: #3a2a20;
+  --accent: #b4552d;
+  --accent-ink: #ffffff;
+  --gold: #d4a017;
+  --line: #e5d9c5;
+}
+
+.theme-silver {
+  --bg: #f2f3f5;
+  --panel: #ffffff;
+  --ink: #23272e;
+  --accent: #5b6470;
+  --accent-ink: #ffffff;
+  --gold: #9aa3ad;
+  --line: #d8dce1;
+}
+
+.theme-spousey {
+  --bg: #fdf6ec;
+  --panel: #ffffff;
+  --ink: #3a2a20;
+  --accent: #b4552d;
+  --accent-ink: #ffffff;
+  --gold: #d4a017;
+  --line: #e5d9c5;
+}
+
+.theme-family {
+  --bg: #fdf3e3;
+  --panel: #fffdf8;
+  --ink: #43302a;
+  --accent: #c2691e;
+  --accent-ink: #ffffff;
+  --gold: #e0a92e;
+  --line: #ecd9bd;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.font-script {
+  font-family: var(--font-script), cursive;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 18px;
+}
+
+.btn-accent {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-weight: 600;
+}
+
+.input {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  width: 100%;
+  color: var(--ink);
+}
+
+.coin {
+  border-radius: 9999px;
+  background: radial-gradient(circle at 35% 30%, #ffe98a, #e9b949 55%, #b8860b);
+  border: 2px solid #a87408;
+  box-shadow: inset 0 0 0 3px rgba(255, 244, 190, 0.7);
+}
