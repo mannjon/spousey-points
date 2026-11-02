@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import type { AppData, BountyDTO } from "@/lib/types";
 import { bountyStatusInfo } from "@/lib/bounty";
 import { playSound } from "@/lib/sounds";
@@ -36,20 +37,43 @@ export default function FamilyTab({
   const child = data.children[0] ?? null;
   const parents = [me, ...data.members];
 
-  async function step(childId: string, delta: number) {
-    const c = data.children.find((x) => x.id === childId);
-    if (!c) return;
-    const next = c.tokens + delta;
+  // The stepper answers every tap instantly and in order: the shown
+  // count lives in a ref so fast taps stack on the latest number, each
+  // tap sends its own ±1 to the server (which applies it as an increment
+  // to the stored balance), and one resync runs after the taps settle
+  // instead of a full reload after every single tap.
+  const shownRef = useRef(new Map<string, number>());
+  const settleRef = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    for (const c of data.children) shownRef.current.set(c.id, c.tokens);
+  }, [data.children]);
+
+  function step(childId: string, delta: number) {
+    const base =
+      shownRef.current.get(childId) ??
+      data.children.find((x) => x.id === childId)?.tokens ??
+      0;
+    const next = base + delta;
     if (next < 0) return;
-    // The number moves the instant the arrow is tapped; the server
-    // round-trip then confirms it (and refresh resyncs on any failure).
+    shownRef.current.set(childId, next);
     patchChild?.(childId, next);
-    try {
-      await childAdjust(childId, delta);
-    } catch {
-      toast("That didn't go through.");
-    }
-    await refresh();
+    void (async () => {
+      try {
+        const res = await childAdjust(childId, delta);
+        if (!res.ok) {
+          toast(res.error);
+          await refresh();
+        }
+      } catch {
+        toast("That didn't go through.");
+        await refresh();
+      }
+    })();
+    window.clearTimeout(settleRef.current);
+    settleRef.current = window.setTimeout(() => {
+      void refresh();
+    }, 700);
   }
 
   return (
