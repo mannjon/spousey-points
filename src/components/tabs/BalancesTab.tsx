@@ -146,6 +146,7 @@ export default function BalancesTab({
   return (
     <section className="screen active" aria-label="Balances">
       <div className="topbar">
+        <span className="name">{me.screenName}</span>
         <button type="button" className="gear-btn" aria-label="Open settings" onClick={onOpenSettings}>
           ⚙
         </button>
@@ -224,9 +225,6 @@ export default function BalancesTab({
 
       <div className="cards">
         <article className="card me">
-          <div className="who">
-            <span className="name">{me.screenName}</span>
-          </div>
           <div className="bals">
             <div className="bal pts">
               <div className="k">Points</div>
