@@ -760,7 +760,7 @@
       .child-card{ border:2px solid var(--gold); }
       .token-stepper{ display:flex; flex-direction:column; gap:8px; flex:none; justify-content:center; }
       .token-stepper button{ width:52px; height:40px; border-radius:10px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:1rem; font-weight:800; line-height:1; box-shadow:var(--shadow); }
-      .token-stepper button:active{ transform:translateY(1px); }
+
       .child-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
       .child-actions .btn{ flex:1; padding:11px 14px; }
       .rate-line{ font-size:.9rem; color:var(--muted); margin-top:10px; }
