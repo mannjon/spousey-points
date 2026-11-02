@@ -25,17 +25,30 @@ export default function FamilyTab({
   data,
   refresh,
   toast,
+  patchChild,
 }: {
   data: AppData;
   refresh: () => Promise<void>;
   toast: (msg: string) => void;
+  patchChild?: (childId: string, tokens: number) => void;
 }) {
   const me = data.me;
   const child = data.children[0] ?? null;
   const parents = [me, ...data.members];
 
   async function step(childId: string, delta: number) {
-    await childAdjust(childId, delta);
+    const c = data.children.find((x) => x.id === childId);
+    if (!c) return;
+    const next = c.tokens + delta;
+    if (next < 0) return;
+    // The number moves the instant the arrow is tapped; the server
+    // round-trip then confirms it (and refresh resyncs on any failure).
+    patchChild?.(childId, next);
+    try {
+      await childAdjust(childId, delta);
+    } catch {
+      toast("That didn't go through.");
+    }
     await refresh();
   }
 

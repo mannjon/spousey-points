@@ -5,7 +5,7 @@ import type { AppData, BountyDTO, OfferDTO } from "@/lib/types";
 import { verifierId } from "@/lib/bounty";
 import { formatDateTime } from "@/lib/time";
 import { playSound } from "@/lib/sounds";
-import { acceptNotice, buyPoints, loveTap, redeemTokens } from "@/app/app-actions";
+import { acceptNotice, buyPoints, loveTapFormAction, redeemTokens } from "@/app/app-actions";
 import SheriffBadge from "../SheriffBadge";
 
 function HeartIcon() {
@@ -49,7 +49,6 @@ export default function BalancesTab({
   onOpenSettings: () => void;
 }) {
   const me = data.me;
-  const [tapMsg, setTapMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [redeemAmt, setRedeemAmt] = useState("");
   const [redeemReason, setRedeemReason] = useState("");
   const [redeemMsg, setRedeemMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -88,40 +87,6 @@ export default function BalancesTab({
     (o) => o.fromUserId === me.id && o.status === "COUNTERED"
   );
   const other = data.members[0] ?? null;
-
-  async function onLoveTap(toUserId: string, name: string) {
-    if (me.points < 1) {
-      setTapMsg({ text: "You're out of points — Love Taps come back with the Saturday drop.", ok: false });
-      return;
-    }
-    let res: Awaited<ReturnType<typeof loveTap>>;
-    try {
-      res = await loveTap(toUserId);
-    } catch {
-      // The tap call itself died — no answer came back at all. Never sit
-      // silent: say so on screen, and reload once so the phone picks up
-      // the app's current code. The session flag keeps it to one reload.
-      setTapMsg({ text: "That tap didn't go through — reloading the app to resync.", ok: false });
-      try {
-        if (!window.sessionStorage.getItem("lt-resync")) {
-          window.sessionStorage.setItem("lt-resync", "1");
-          window.setTimeout(() => window.location.reload(), 1200);
-        }
-      } catch {
-        // Storage unavailable — the message above still shows.
-      }
-      return;
-    }
-    if (!res.ok) {
-      setTapMsg({ text: res.error, ok: false });
-      return;
-    }
-    playSound("chaChing");
-    patchMe(me.points - 1, me.tokens);
-    setTapMsg({ text: `Sent! 1 point out, 1 token banked for ${name}.`, ok: true });
-    toast(`♥ Love Tap sent — ${name} banked 1 token.`);
-    await refresh();
-  }
 
   async function onRedeem() {
     const amt = Math.floor(Number(redeemAmt) || 0);
@@ -302,22 +267,18 @@ export default function BalancesTab({
           <HeartIcon /> Love Tap
         </h2>
         {data.members.map((m) => (
-          <div className="btnrow" key={m.id}>
-            <button
-              type="button"
-              className="btn lovetap block"
-              disabled={me.points < 1}
-              onClick={() => onLoveTap(m.id, m.screenName)}
-            >
-              ♥ Love Tap — send {m.screenName} a token
-            </button>
-          </div>
+          <form
+            key={m.id}
+            action={loveTapFormAction.bind(null, m.id)}
+            onSubmit={() => playSound("chaChing")}
+          >
+            <div className="btnrow">
+              <button type="submit" className="btn lovetap block" disabled={me.points < 1}>
+                ♥ Love Tap — send {m.screenName} a token
+              </button>
+            </div>
+          </form>
         ))}
-        {tapMsg ? (
-          <p className={`form-msg ${tapMsg.ok ? "ok" : "err"}`} role="status">
-            {tapMsg.text}
-          </p>
-        ) : null}
       </div>
 
       <div className="panel">
