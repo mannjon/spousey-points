@@ -82,6 +82,14 @@ export default function AppShell({
     setData((d) => ({ ...d, me: { ...d.me, points, tokens } }));
   }, []);
 
+  // Same instant repaint for a child's token count (the ▲/▼ stepper).
+  const patchChild = useCallback((childId: string, tokens: number) => {
+    setData((d) => ({
+      ...d,
+      children: d.children.map((c) => (c.id === childId ? { ...c, tokens } : c)),
+    }));
+  }, []);
+
   const openBounty = useCallback(
     (b: BountyDTO) => {
       playSound("pageFlip");
@@ -186,7 +194,7 @@ export default function AppShell({
           <BountiesTab data={data} refresh={refresh} toast={toast} openBounty={openBounty} />
         </section>
         <section className={tab === "family" ? "screen active" : "screen"} id="screen-family" aria-label="Family">
-          <FamilyTab data={data} refresh={refresh} toast={toast} />
+          <FamilyTab data={data} refresh={refresh} toast={toast} patchChild={patchChild} />
         </section>
         <section className={tab === "log" ? "screen active" : "screen"} id="screen-log" aria-label="Transaction log">
           <LogTab data={data} refresh={refresh} toast={toast} />
