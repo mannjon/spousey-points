@@ -84,7 +84,7 @@
       :focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 
       /* ---------- top bar (settings gear only — no person switcher) ---------- */
-      .topbar { display: flex; align-items: center; margin-bottom: 18px; }
+      .topbar { display: flex; align-items: center; margin-bottom: 0; }
 
       /* ---------- balance cards ---------- */
       .cards { display: grid; gap: 18px; }
