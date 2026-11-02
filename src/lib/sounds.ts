@@ -129,6 +129,10 @@ export function playSound(name: SoundName) {
   if (!ac) return;
   const now = performance.now();
   if (now < busyUntil) return;
-  const duration = EFFECTS[name](ac, ac.currentTime);
-  busyUntil = now + duration * 1000;
+  try {
+    const duration = EFFECTS[name](ac, ac.currentTime);
+    busyUntil = now + duration * 1000;
+  } catch {
+    // A sound effect must never break the action that triggered it.
+  }
 }
