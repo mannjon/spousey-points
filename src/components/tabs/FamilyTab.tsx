@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef, useState } from "react";
 import type { AppData, BountyDTO } from "@/lib/types";
 import { bountyStatusInfo } from "@/lib/bounty";
 import { playSound } from "@/lib/sounds";
@@ -37,17 +37,16 @@ export default function FamilyTab({
   const child = data.children[0] ?? null;
   const parents = [me, ...data.members];
 
-  // The stepper answers every tap instantly and in order: the shown
-  // count lives in a ref so fast taps stack on the latest number, each
-  // tap sends its own ±1 to the server (which applies it as an increment
-  // to the stored balance), and one resync runs after the taps settle
-  // instead of a full reload after every single tap.
+  // The stepper owns the child's number while taps are in flight: taps
+  // stack on a local count that no reload can repaint or reset, the ±1
+  // writes go to the server one at a time in tap order, and only after
+  // the last one has landed does the screen hand the number back to the
+  // app data with a single resync. A reload landing mid-burst with an
+  // older count was dragging the number backwards while tapping and
+  // then making it jump on its own once the true count arrived.
+  const [shown, setShown] = useState<Record<string, number>>({});
   const shownRef = useRef(new Map<string, number>());
-  const settleRef = useRef<number | undefined>(undefined);
-
-  useEffect(() => {
-    for (const c of data.children) shownRef.current.set(c.id, c.tokens);
-  }, [data.children]);
+  const queueRef = useRef(new Map<string, Promise<void>>());
 
   function step(childId: string, delta: number) {
     const base =
@@ -57,23 +56,30 @@ export default function FamilyTab({
     const next = base + delta;
     if (next < 0) return;
     shownRef.current.set(childId, next);
+    setShown((p) => ({ ...p, [childId]: next }));
     patchChild?.(childId, next);
-    void (async () => {
+    const prev = queueRef.current.get(childId) ?? Promise.resolve();
+    const run = prev.then(async () => {
       try {
         const res = await childAdjust(childId, delta);
-        if (!res.ok) {
-          toast(res.error);
-          await refresh();
-        }
+        if (!res.ok) toast(res.error);
       } catch {
         toast("That didn't go through.");
+      }
+      // A newer tap queued behind this one owns the finish; only the
+      // last write in line resyncs and hands the number back.
+      if (queueRef.current.get(childId) === run) {
+        queueRef.current.delete(childId);
+        shownRef.current.delete(childId);
+        setShown((p) => {
+          const n = { ...p };
+          delete n[childId];
+          return n;
+        });
         await refresh();
       }
-    })();
-    window.clearTimeout(settleRef.current);
-    settleRef.current = window.setTimeout(() => {
-      void refresh();
-    }, 700);
+    });
+    queueRef.current.set(childId, run);
   }
 
   return (
@@ -88,7 +94,7 @@ export default function FamilyTab({
             <div className="bals">
               <div className="bal tok">
                 <div className="k">Tokens</div>
-                <div className="v mono">{c.tokens}</div>
+                <div className="v mono">{shown[c.id] ?? c.tokens}</div>
               </div>
               <div className="token-stepper">
                 <button
