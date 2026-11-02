@@ -54,7 +54,7 @@ export default function FamilyTab({
 
   return (
     <section className="screen active" aria-label="Family">
-      <h2 style={{ fontSize: "1.3rem", fontWeight: 800 }}>Family — kids&apos; tokens</h2>
+      <h2 style={{ fontSize: "1.3rem", fontWeight: 800, marginBottom: 18 }}>Family — kids&apos; tokens</h2>
       <div>
         {data.children.map((c) => (
           <article className="card child-card" style={{ marginBottom: 18 }} key={c.id}>
