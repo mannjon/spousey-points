@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -12,10 +12,6 @@ export const metadata: Metadata = {
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   appleWebApp: { capable: true, title: "Spousey Points", statusBarStyle: "default" },
-};
-
-export const viewport: Viewport = {
-  themeColor: "#fadfe9",
 };
 
 export default function RootLayout({
