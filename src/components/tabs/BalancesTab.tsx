@@ -226,12 +226,6 @@ export default function BalancesTab({
         <article className="card me">
           <div className="who">
             <span className="name">{me.screenName}</span>
-            <span
-              className="tag-later"
-              style={{ background: "var(--green-soft)", color: "var(--green-deep)" }}
-            >
-              That’s you
-            </span>
           </div>
           <div className="bals">
             <div className="bal pts">
