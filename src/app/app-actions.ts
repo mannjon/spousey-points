@@ -260,6 +260,12 @@ export async function loveTap(toUserId: string): Promise<ActionResult> {
   return res;
 }
 
+// Form-post entry point for the Love Tap button: a plain form submit
+// reaches the server even when the page's click handlers never run.
+export async function loveTapFormAction(toUserId: string, _formData: FormData): Promise<void> {
+  await loveTap(toUserId);
+}
+
 export async function redeemTokens(input: {
   toUserId: string;
   amount: number;
