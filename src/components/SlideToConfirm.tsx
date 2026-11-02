@@ -47,7 +47,13 @@ export default function SlideToConfirm({
     posRef.current = x;
     setSpring(animate);
     thumb.style.left = `${INSET + x}px`;
-    fill.style.width = `${x + thumb.offsetWidth + INSET}px`;
+    // The fill is the drag trail only: in the working app its width is
+    // 0 at rest and it paints solely while the thumb is away from rest.
+    // At rest it must stay invisible — the family theme's pale
+    // green-soft would otherwise show as a block around the thumb
+    // (the bounty slider's dark gold-soft hides the same width, which
+    // is why only the Spend slider looked wrong).
+    fill.style.width = x > 0 ? `${x + thumb.offsetWidth + INSET}px` : "0px";
     const mt = maxTravel();
     track.setAttribute("aria-valuenow", String(mt ? Math.round((x / mt) * 100) : 0));
   }
@@ -104,7 +110,7 @@ export default function SlideToConfirm({
         ...(disabled ? { pointerEvents: "none" as const } : {}),
       }}
     >
-      <div ref={fillRef} className="slide-fill" style={{ width: 61 }} />
+      <div ref={fillRef} className="slide-fill" style={{ width: 0 }} />
       <span className="slide-label">{label}</span>
       <div
         ref={thumbRef}
