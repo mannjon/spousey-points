@@ -267,11 +267,11 @@ export default function BalancesTab({
               disabled={me.points < 1 || tapBusy}
               onClick={async () => {
                 if (tapBusy) return;
+                playSound("chaChing");
                 setTapBusy(true);
                 const res = await loveTap(m.id);
                 setTapBusy(false);
                 if (!res.ok) return;
-                playSound("chaChing");
                 patchMe(me.points - 1, me.tokens);
                 await refresh();
               }}
