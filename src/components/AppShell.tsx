@@ -12,10 +12,11 @@ import SpendTab from "./tabs/SpendTab";
 import BountiesTab from "./tabs/BountiesTab";
 import FamilyTab from "./tabs/FamilyTab";
 import LogTab from "./tabs/LogTab";
+import RewardsTab from "./tabs/RewardsTab";
 import BountyModal from "./BountyModal";
 import OfferSheet from "./OfferSheet";
 
-type TabKey = "home" | "spend" | "bounties" | "family" | "log";
+type TabKey = "home" | "spend" | "bounties" | "family" | "rewards" | "log";
 
 const VERSION_KEY: Record<string, string> = {
   SPOUSEY: "spousey",
@@ -153,20 +154,6 @@ export default function AppShell({
             {bountyActionCount}
           </span>
         ) : null}
-        {key === "log" && unseenLogCount > 0 ? (
-          <span
-            aria-hidden="true"
-            style={{
-              position: "absolute",
-              top: 4,
-              right: 6,
-              width: 9,
-              height: 9,
-              borderRadius: "50%",
-              background: "var(--red)",
-            }}
-          />
-        ) : null}
       </button>
     );
   }
@@ -195,6 +182,9 @@ export default function AppShell({
         </section>
         <section className={tab === "family" ? "screen active" : "screen"} id="screen-family" aria-label="Family">
           <FamilyTab data={data} refresh={refresh} toast={toast} patchChild={patchChild} />
+        </section>
+        <section className={tab === "rewards" ? "screen active" : "screen"} id="screen-rewards" aria-label="Rewards">
+          <RewardsTab />
         </section>
         <section className={tab === "log" ? "screen active" : "screen"} id="screen-log" aria-label="Transaction log">
           <LogTab data={data} refresh={refresh} toast={toast} />
@@ -363,6 +353,34 @@ export default function AppShell({
                 <li>Points you receive land as tokens</li>
               </ul>
             </div>
+            <div style={{ marginTop: 18 }}>
+              <button
+                type="button"
+                className="btn block"
+                style={{ position: "relative" }}
+                onClick={() => {
+                  setSettingsOpen(false);
+                  setTab("log");
+                  window.scrollTo(0, 0);
+                }}
+              >
+                Log
+                {unseenLogCount > 0 ? (
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      position: "absolute",
+                      top: 4,
+                      right: 6,
+                      width: 9,
+                      height: 9,
+                      borderRadius: "50%",
+                      background: "var(--red)",
+                    }}
+                  />
+                ) : null}
+              </button>
+            </div>
             <div className="btnrow">
               <form action={logout}>
                 <button type="submit" className="btn ghost">
@@ -463,7 +481,7 @@ export default function AppShell({
           {tabButton("spend", "Spend")}
           {tabButton("bounties", "Bounties")}
           {isFamily ? tabButton("family", "Family") : null}
-          {tabButton("log", "Log")}
+          {tabButton("rewards", "Rewards")}
         </div>
       </nav>
 
