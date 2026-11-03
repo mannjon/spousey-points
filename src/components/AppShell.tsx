@@ -184,7 +184,7 @@ export default function AppShell({
           <FamilyTab data={data} refresh={refresh} toast={toast} patchChild={patchChild} />
         </section>
         <section className={tab === "rewards" ? "screen active" : "screen"} id="screen-rewards" aria-label="Rewards">
-          <RewardsTab />
+          <RewardsTab data={data} refresh={refresh} toast={toast} patchMe={patchMe} />
         </section>
         <section className={tab === "log" ? "screen active" : "screen"} id="screen-log" aria-label="Transaction log">
           <LogTab data={data} refresh={refresh} toast={toast} />
