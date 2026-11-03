@@ -98,6 +98,69 @@ export type StatsDTO = {
   avgFreeTimePct: number;
 };
 
+export type RewardPartDTO = {
+  memberKey: string;
+  name: string;
+  isChild: boolean;
+  isMe: boolean;
+  amount: number;
+  contributed: number;
+};
+
+export type RewardDTO = {
+  id: string;
+  title: string;
+  description: string | null;
+  cost: number;
+  kind: string;
+  audience: string;
+  isDefault: boolean;
+  saved: boolean;
+  locked: boolean;
+  lockedById: string | null;
+  lockedByName: string | null;
+  createdById: string;
+  status: string;
+  dueDate: string | null;
+  parts: RewardPartDTO[];
+  filledTotal: number;
+  targetTotal: number;
+  createdAt: string;
+};
+
+export type RewardTierDTO = {
+  id: string;
+  minCost: number;
+  maxCost: number | null;
+};
+
+export type PersonRewardsDTO = {
+  ownerType: "USER" | "CHILD";
+  ownerId: string;
+  ownerName: string;
+  rewards: RewardDTO[];
+};
+
+export type RewardRequestDTO = {
+  id: string;
+  rewardId: string;
+  rewardTitle: string;
+  cost: number;
+  requesterId: string;
+  requesterName: string;
+  status: string;
+  createdAt: string;
+  mine: boolean;
+};
+
+export type RewardsDataDTO = {
+  tiers: RewardTierDTO[];
+  mine: PersonRewardsDTO;
+  others: PersonRewardsDTO[];
+  requests: RewardRequestDTO[];
+  locksUsedByMe: number;
+};
+
 export type AppData = {
   me: MeDTO;
   members: MemberDTO[];
@@ -111,4 +174,5 @@ export type AppData = {
   expiryLabel: string;
   todayChicago: string;
   defaultDueDate: string;
+  rewards: RewardsDataDTO;
 };

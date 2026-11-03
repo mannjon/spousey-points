@@ -4,7 +4,8 @@ import { runWeeklyEngine } from "./engine";
 import { getLogStats } from "./stats";
 import { isIndirect } from "./log";
 import { addDaysToDateString, chicagoDateString, wallParts } from "./time";
-import type { AppData, BountyDTO } from "./types";
+import { memberKey, seedRewardsIfNeeded, sweepFailedGoals } from "./rewards";
+import type { AppData, BountyDTO, PersonRewardsDTO, RewardDTO } from "./types";
 
 // Loads everything the app shell renders, household-scoped. Runs the lazy
 // weekly engine first, then lazily expires open bounties past their due
@@ -24,7 +25,10 @@ export async function getAppData(user: User): Promise<AppData> {
     data: { status: "EXPIRED" },
   });
 
-  const [members, children, offers, bounties, notices, pendingInvitees, entries, seenRows, stats] =
+  await seedRewardsIfNeeded(householdId, me.id);
+  await sweepFailedGoals(householdId);
+
+  const [members, children, offers, bounties, notices, pendingInvitees, entries, seenRows, stats, allRewards, myTiers, rewardRequests, myLocks] =
     await Promise.all([
       prisma.user.findMany({
         where: { householdId, NOT: { id: me.id } },
@@ -70,6 +74,26 @@ export async function getAppData(user: User): Promise<AppData> {
       }),
       prisma.logSeen.findMany({ where: { userId: me.id } }),
       getLogStats(me.id, householdId, now),
+      prisma.reward.findMany({
+        where: { householdId },
+        include: { parts: true, contributions: true, lockedBy: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.rewardTier.findMany({
+        where: { userId: me.id },
+        orderBy: { minCost: "asc" },
+      }),
+      prisma.rewardRequest.findMany({
+        where: {
+          householdId,
+          status: { in: ["PENDING", "APPROVED"] },
+        },
+        include: { reward: true, requester: true },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.reward.count({
+        where: { householdId, locked: true, lockedById: me.id },
+      }),
     ]);
 
   const nameOf = (id: string | null) => {
@@ -109,6 +133,85 @@ export async function getAppData(user: User): Promise<AppData> {
     createdAt: b.createdAt.toISOString(),
     completedAt: b.completedAt ? b.completedAt.toISOString() : null,
   }));
+
+  const childName = (id: string | null) =>
+    id ? (children.find((c) => c.id === id)?.name ?? null) : null;
+
+  const toRewardDTO = (r: (typeof allRewards)[number]): RewardDTO => {
+    const parts = r.parts.map((pt) => {
+      const contributed = r.contributions
+        .filter(
+          (c) =>
+            (pt.memberUserId && c.partUserId === pt.memberUserId) ||
+            (pt.memberChildId && c.partChildId === pt.memberChildId)
+        )
+        .reduce((s, c) => s + c.amount, 0);
+      return {
+        memberKey: memberKey(pt.memberUserId, pt.memberChildId),
+        name: pt.memberUserId ? (nameOf(pt.memberUserId) ?? "") : (childName(pt.memberChildId) ?? ""),
+        isChild: !!pt.memberChildId,
+        isMe: pt.memberUserId === me.id,
+        amount: pt.amount,
+        contributed,
+      };
+    });
+    return {
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      cost: r.cost,
+      kind: r.kind,
+      audience: r.audience,
+      isDefault: r.isDefault,
+      saved: r.saved,
+      locked: r.locked,
+      lockedById: r.lockedById,
+      lockedByName: r.lockedBy?.screenName ?? null,
+      createdById: r.createdById,
+      status: r.status,
+      dueDate: r.dueDate ? r.dueDate.toISOString() : null,
+      parts,
+      filledTotal: r.contributions.reduce((s, c) => s + c.amount, 0),
+      targetTotal: parts.length ? parts.reduce((s, pt) => s + pt.amount, 0) : r.cost,
+      createdAt: r.createdAt.toISOString(),
+    };
+  };
+
+  const rewardsFor = (
+    ownerType: "USER" | "CHILD",
+    ownerId: string,
+    ownerName: string
+  ): PersonRewardsDTO => ({
+    ownerType,
+    ownerId,
+    ownerName,
+    rewards: allRewards
+      .filter((r) =>
+        ownerType === "USER" ? r.ownerUserId === ownerId : r.ownerChildId === ownerId
+      )
+      .map(toRewardDTO),
+  });
+
+  const rewardsData = {
+    tiers: myTiers.map((t) => ({ id: t.id, minCost: t.minCost, maxCost: t.maxCost })),
+    mine: rewardsFor("USER", me.id, me.screenName),
+    others: [
+      ...members.map((m) => rewardsFor("USER", m.id, m.screenName)),
+      ...children.map((c) => rewardsFor("CHILD", c.id, c.name)),
+    ],
+    requests: rewardRequests.map((q) => ({
+        id: q.id,
+        rewardId: q.rewardId,
+        rewardTitle: q.reward.title,
+        cost: q.reward.cost,
+        requesterId: q.requesterId,
+        requesterName: q.requester.screenName,
+        status: q.status,
+        createdAt: q.createdAt.toISOString(),
+        mine: q.requesterId === me.id,
+      })),
+    locksUsedByMe: myLocks,
+  };
 
   const p = wallParts(now);
   const expiry = new Date(Date.UTC(p.year, p.month, 0));
@@ -184,5 +287,6 @@ export async function getAppData(user: User): Promise<AppData> {
     expiryLabel,
     todayChicago: chicagoDateString(now),
     defaultDueDate: addDaysToDateString(chicagoDateString(now), 3),
+    rewards: rewardsData,
   };
 }

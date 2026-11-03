@@ -1,7 +1,7 @@
 // Synthesized sound effects (no audio assets). One sound at a time: a call
 // made while another effect is still playing is dropped.
 
-export type SoundName = "chaChing" | "coinPurse" | "kiss" | "pageFlip";
+export type SoundName = "chaChing" | "coinPurse" | "kiss" | "pageFlip" | "lockClick";
 
 let ctx: AudioContext | null = null;
 let busyUntil = 0;
@@ -117,11 +117,35 @@ function pageFlip(ac: AudioContext, t: number): number {
   return 0.28;
 }
 
+function lockClick(ac: AudioContext, t: number): number {
+  // A door latch: two short mechanical clicks, the second lower and final.
+  for (const [at, freq, peak] of [
+    [t, 3200, 0.18],
+    [t + 0.07, 1400, 0.24],
+  ] as const) {
+    const src = ac.createBufferSource();
+    src.buffer = noiseBuffer(ac, 0.03);
+    const bp = ac.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.Q.value = 2;
+    bp.frequency.value = freq;
+    const g = ac.createGain();
+    g.gain.setValueAtTime(peak, at);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + 0.035);
+    src.connect(bp).connect(g).connect(ac.destination);
+    src.start(at);
+    src.stop(at + 0.04);
+  }
+  ping(ac, 220, t + 0.07, 0.08, 0.12, "sine");
+  return 0.25;
+}
+
 const EFFECTS: Record<SoundName, (ac: AudioContext, t: number) => number> = {
   chaChing,
   coinPurse,
   kiss,
   pageFlip,
+  lockClick,
 };
 
 export function playSound(name: SoundName) {
