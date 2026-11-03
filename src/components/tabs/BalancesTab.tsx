@@ -5,7 +5,7 @@ import type { AppData, BountyDTO, OfferDTO } from "@/lib/types";
 import { verifierId } from "@/lib/bounty";
 import { formatDateTime } from "@/lib/time";
 import { playSound } from "@/lib/sounds";
-import { acceptNotice, buyPoints, loveTapFormAction, redeemTokens } from "@/app/app-actions";
+import { acceptNotice, buyPoints, loveTap, redeemTokens } from "@/app/app-actions";
 import SheriffBadge from "../SheriffBadge";
 
 function HeartIcon() {
@@ -54,6 +54,8 @@ export default function BalancesTab({
   const [redeemMsg, setRedeemMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [buyAmt, setBuyAmt] = useState("");
   const [buyMsg, setBuyMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [tapMsg, setTapMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [tapBusy, setTapBusy] = useState(false);
   const kissedRef = useRef<Set<string>>(new Set());
 
   // Love Tap receipts: the receiver hears the kiss when the tap is
@@ -259,18 +261,36 @@ export default function BalancesTab({
           <HeartIcon /> Love Tap
         </h2>
         {data.members.map((m) => (
-          <form
-            key={m.id}
-            action={loveTapFormAction.bind(null, m.id)}
-            onSubmit={() => playSound("chaChing")}
-          >
-            <div className="btnrow">
-              <button type="submit" className="btn lovetap block" disabled={me.points < 1}>
-                ♥ Love Tap — send {m.screenName} a token
-              </button>
-            </div>
-          </form>
+          <div className="btnrow" key={m.id}>
+            <button
+              type="button"
+              className="btn lovetap block"
+              disabled={me.points < 1 || tapBusy}
+              onClick={async () => {
+                if (tapBusy) return;
+                setTapBusy(true);
+                setTapMsg(null);
+                const res = await loveTap(m.id);
+                setTapBusy(false);
+                if (!res.ok) {
+                  setTapMsg({ text: res.error, ok: false });
+                  return;
+                }
+                playSound("chaChing");
+                patchMe(me.points - 1, me.tokens);
+                setTapMsg({ text: `Sent — ${m.screenName} got a token.`, ok: true });
+                await refresh();
+              }}
+            >
+              ♥ Love Tap — send {m.screenName} a token
+            </button>
+          </div>
         ))}
+        {tapMsg ? (
+          <p className={`form-msg ${tapMsg.ok ? "ok" : "err"}`} role="status">
+            {tapMsg.text}
+          </p>
+        ) : null}
       </div>
 
       <div className="panel">
