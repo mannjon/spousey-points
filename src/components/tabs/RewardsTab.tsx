@@ -66,6 +66,21 @@ function LockGlyph() {
   );
 }
 
+function CoinGlyph({ lit }: { lit: boolean }) {
+  return (
+    <svg className="rw-coin" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" fill={lit ? "#a8741a" : "#5f6b66"} />
+      <circle cx="12" cy="12" r="7.4" fill={lit ? "#f5c542" : "#8b968f"} />
+      <g transform="translate(6.9 7.3) scale(0.425)">
+        <path
+          d="M12 21s-8-5.5-8-11a4.5 4.5 0 0 1 8-3 4.5 4.5 0 0 1 8 3c0 5.5-8 11-8 11Z"
+          fill={lit ? "#a8741a" : "#5f6b66"}
+        />
+      </g>
+    </svg>
+  );
+}
+
 // ------------------------------------------------------------ one reward row
 
 function RewardRow({
@@ -78,6 +93,7 @@ function RewardRow({
   run,
   refresh,
   toast,
+  onCashInSent,
 }: {
   reward: RewardDTO;
   section: PersonRewardsDTO;
@@ -88,6 +104,7 @@ function RewardRow({
   run: Run;
   refresh: () => Promise<void>;
   toast: (t: string) => void;
+  onCashInSent: (cost: number) => void;
 }) {
   const [descOpen, setDescOpen] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
@@ -104,6 +121,7 @@ function RewardRow({
   const mine = section.ownerType === "USER" && section.ownerId === meId;
   const affordable = isGoal || ownerTokens === null ? true : ownerTokens >= reward.cost;
   const done = reward.status === "COMPLETED" || reward.status === "FAILED";
+  const showAfford = !isGoal && ownerTokens !== null && affordable && !done;
   const canLock = reward.createdById === meId && !reward.locked;
   const canDelete = !(reward.locked && reward.lockedById !== meId);
   const canEdit = mine || section.ownerType === "CHILD";
@@ -115,9 +133,11 @@ function RewardRow({
   );
 
   async function onCashIn() {
+    playSound("chaChing");
     if (await run(() => requestCashIn(reward.id))) {
       toast("Sent for approval.");
       await refresh();
+      onCashInSent(reward.cost);
     }
   }
 
@@ -185,18 +205,14 @@ function RewardRow({
   }
 
   return (
-    <div
-      className="panel rw-row"
-      style={
-        !affordable && !done ? { opacity: 0.3, filter: "grayscale(0.5)" } : undefined
-      }
-    >
+    <div className={`panel rw-row${showAfford ? " rw-afford" : ""}`}>
       <div className="rw-line">
         {reward.audience !== "SELF" && (
           <PeopleIcon n={reward.audience === "FAMILY" ? 3 : 2} />
         )}
         <div className="rw-title">{reward.title}</div>
         <div className="rw-cost">
+          {!isGoal && ownerTokens !== null && <CoinGlyph lit={affordable} />}
           {reward.cost} <span>tokens</span>
         </div>
         {reward.locked ? (
@@ -383,12 +399,7 @@ function RewardRow({
                   : "Sent — waiting"}
               </button>
             ) : (
-              <button
-                type="button"
-                className="btn green"
-                disabled={!affordable}
-                onClick={onCashIn}
-              >
+              <button type="button" className="btn green" onClick={onCashIn}>
                 Cash in
               </button>
             )
@@ -425,6 +436,7 @@ function PersonSection({
   run,
   refresh,
   toast,
+  onCashInSent,
 }: {
   section: PersonRewardsDTO;
   tiers: AppData["rewards"]["tiers"];
@@ -435,6 +447,7 @@ function PersonSection({
   run: Run;
   refresh: () => Promise<void>;
   toast: (t: string) => void;
+  onCashInSent: (cost: number) => void;
 }) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const sorted = [...section.rewards].sort(
@@ -493,6 +506,7 @@ function PersonSection({
                 run={run}
                 refresh={refresh}
                 toast={toast}
+                onCashInSent={onCashInSent}
               />
             ))}
         </div>
@@ -517,6 +531,8 @@ export default function RewardsTab({
 }) {
   const me = data.me;
   const rw = data.rewards;
+
+  const onCashInSent = (cost: number) => patchMe(me.points, me.tokens - cost);
 
   const run: Run = async (fn) => {
     const res = await fn();
@@ -619,7 +635,6 @@ export default function RewardsTab({
   async function onFinalize(q: RewardRequestDTO) {
     if (await run(() => finalizeCashIn(q.id))) {
       playSound("chaChing");
-      patchMe(me.points, me.tokens - q.cost);
       toast("Cashed in.");
       await refresh();
     }
@@ -706,6 +721,7 @@ export default function RewardsTab({
         run={run}
         refresh={refresh}
         toast={toast}
+        onCashInSent={onCashInSent}
       />
       {rw.others.map((p) => (
         <PersonSection
@@ -723,6 +739,7 @@ export default function RewardsTab({
           run={run}
           refresh={refresh}
           toast={toast}
+          onCashInSent={onCashInSent}
         />
       ))}
 
