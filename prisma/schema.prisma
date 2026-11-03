@@ -34,6 +34,32 @@ enum BountyStatus {
   EXPIRED
 }
 
+enum RewardKind {
+  PERSONAL
+  SHARED_SOLO
+  SHARED_GOAL
+}
+
+enum RewardAudience {
+  SELF
+  PLUS_ONE
+  FAMILY
+}
+
+enum RewardStatus {
+  ACTIVE
+  OPEN
+  COMPLETED
+  FAILED
+}
+
+enum RewardRequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  FINALIZED
+}
+
 model Household {
   id        String   @id @default(cuid())
   name      String?
@@ -46,6 +72,9 @@ model Household {
   logEntries     LogEntry[]
   notices        Notice[]
   pendingInvites PendingInvite[]
+  rewards        Reward[]
+  rewardRequests RewardRequest[]
+  rewardTiers    RewardTier[]
 }
 
 model User {
@@ -59,6 +88,7 @@ model User {
   tokens              Int      @default(0)
   weeklyDowntimeHours Int      @default(20)
   invitePromptDone    Boolean  @default(false)
+  rewardsSeeded       Boolean  @default(false)
   // Lazy weekly-engine marker: Saturday point grants + month-end expiry are
   // applied for every boundary after this instant, then it advances to now.
   pointsMarkerAt      DateTime?
@@ -75,6 +105,15 @@ model User {
   logEntries       LogEntry[]  @relation("LogActor")
   notices          Notice[]
 
+  rewardsOwned     Reward[]    @relation("RewardOwnerUser")
+  rewardsCreated   Reward[]    @relation("RewardCreatedBy")
+  rewardsLocked    Reward[]    @relation("RewardLockedBy")
+  rewardRequests   RewardRequest[] @relation("RequestBy")
+  rewardParts      RewardPart[]    @relation("PartMemberUser")
+  contributionsFrom RewardContribution[] @relation("ContributionFromUser")
+  contributionsFor  RewardContribution[] @relation("ContributionForUser")
+  rewardTiers      RewardTier[]    @relation("TierOwner")
+
   @@index([householdId])
 }
 
@@ -88,9 +127,15 @@ model Child {
   weeklyTokenAmount      Int       @default(100)
   // Lazy weekly-engine marker for the Saturday token drop.
   dropMarkerAt           DateTime?
+  rewardsSeeded          Boolean   @default(false)
   createdAt              DateTime  @default(now())
 
   kidClaims Bounty[] @relation("BountyKidClaim")
+
+  rewardsOwned     Reward[]    @relation("RewardOwnerChild")
+  rewardParts      RewardPart[]    @relation("PartMemberChild")
+  contributionsFrom RewardContribution[] @relation("ContributionFromChild")
+  contributionsFor  RewardContribution[] @relation("ContributionForChild")
 
   @@index([householdId])
 }
@@ -242,4 +287,125 @@ model PendingInvite {
   createdAt   DateTime  @default(now())
 
   @@index([householdId])
+}
+
+// ------------------------------------------------------------------ rewards
+// A reward line owned by one person (an adult user or a child). Cashing in
+// is NEVER a transfer: only the person cashing in has their balance
+// decreased, and only at the final tap. A kid's cash-in just sends a
+// notification — no approval, no balance change.
+model Reward {
+  id          String         @id @default(cuid())
+  householdId String
+  household   Household      @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  ownerUserId  String?
+  ownerUser    User?   @relation("RewardOwnerUser", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  ownerChildId String?
+  ownerChild   Child?  @relation("RewardOwnerChild", fields: [ownerChildId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User    @relation("RewardCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  cost        Int
+  kind        RewardKind     @default(PERSONAL)
+  audience    RewardAudience @default(SELF)
+  isDefault   Boolean        @default(false)
+  saved       Boolean        @default(false)
+  status      RewardStatus   @default(ACTIVE)
+  dueDate     DateTime?
+
+  locked     Boolean @default(false)
+  lockedById String?
+  lockedBy   User?   @relation("RewardLockedBy", fields: [lockedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  parts         RewardPart[]
+  contributions RewardContribution[]
+  requests      RewardRequest[]
+
+  @@index([householdId])
+}
+
+// One member's expected share of a shared-goal reward. Parts default to an
+// even split of the total; members can change their own part, and anyone
+// can put in extra past their part so the group does not fail.
+model RewardPart {
+  id       String @id @default(cuid())
+  rewardId String
+  reward   Reward @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+
+  memberUserId  String?
+  memberUser    User?   @relation("PartMemberUser", fields: [memberUserId], references: [id], onDelete: Cascade)
+  memberChildId String?
+  memberChild   Child?  @relation("PartMemberChild", fields: [memberChildId], references: [id], onDelete: Cascade)
+
+  amount Int
+
+  @@unique([rewardId, memberUserId])
+  @@unique([rewardId, memberChildId])
+  @@index([rewardId])
+}
+
+// Tokens actually put toward a shared goal. The bank debited is the part
+// member's own bank (part contributions) or the contributor's own bank
+// (extra contributions, part ids null). Refunded in full if the goal
+// fails by its due date.
+model RewardContribution {
+  id       String @id @default(cuid())
+  rewardId String
+  reward   Reward @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+
+  fromUserId  String?
+  fromUser    User?   @relation("ContributionFromUser", fields: [fromUserId], references: [id], onDelete: Cascade)
+  fromChildId String?
+  fromChild   Child?  @relation("ContributionFromChild", fields: [fromChildId], references: [id], onDelete: Cascade)
+
+  partUserId  String?
+  partUser    User?   @relation("ContributionForUser", fields: [partUserId], references: [id], onDelete: SetNull)
+  partChildId String?
+  partChild   Child?  @relation("ContributionForChild", fields: [partChildId], references: [id], onDelete: SetNull)
+
+  amount    Int
+  createdAt DateTime @default(now())
+
+  @@index([rewardId])
+}
+
+// An adult's cash-in request: the other adult approves or declines, then
+// the requester finalizes with a tap — that tap is the only moment any
+// balance changes.
+model RewardRequest {
+  id          String              @id @default(cuid())
+  householdId String
+  household   Household           @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  rewardId    String
+  reward      Reward              @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  requesterId String
+  requester   User                @relation("RequestBy", fields: [requesterId], references: [id], onDelete: Cascade)
+  status      RewardRequestStatus @default(PENDING)
+  createdAt   DateTime            @default(now())
+  resolvedAt  DateTime?
+
+  @@index([householdId, status])
+  @@index([requesterId, status])
+}
+
+// Cost-range groups for a user's reward list. Seeded with the default
+// ranges; users can delete them and create their own.
+model RewardTier {
+  id          String    @id @default(cuid())
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation("TierOwner", fields: [userId], references: [id], onDelete: Cascade)
+  minCost     Int
+  maxCost     Int?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
 }
