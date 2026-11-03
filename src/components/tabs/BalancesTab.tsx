@@ -54,7 +54,6 @@ export default function BalancesTab({
   const [redeemMsg, setRedeemMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [buyAmt, setBuyAmt] = useState("");
   const [buyMsg, setBuyMsg] = useState<{ text: string; ok: boolean } | null>(null);
-  const [tapMsg, setTapMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [tapBusy, setTapBusy] = useState(false);
   const kissedRef = useRef<Set<string>>(new Set());
 
@@ -269,16 +268,11 @@ export default function BalancesTab({
               onClick={async () => {
                 if (tapBusy) return;
                 setTapBusy(true);
-                setTapMsg(null);
                 const res = await loveTap(m.id);
                 setTapBusy(false);
-                if (!res.ok) {
-                  setTapMsg({ text: res.error, ok: false });
-                  return;
-                }
+                if (!res.ok) return;
                 playSound("chaChing");
                 patchMe(me.points - 1, me.tokens);
-                setTapMsg({ text: `Sent — ${m.screenName} got a token.`, ok: true });
                 await refresh();
               }}
             >
@@ -286,11 +280,6 @@ export default function BalancesTab({
             </button>
           </div>
         ))}
-        {tapMsg ? (
-          <p className={`form-msg ${tapMsg.ok ? "ok" : "err"}`} role="status">
-            {tapMsg.text}
-          </p>
-        ) : null}
       </div>
 
       <div className="panel">
