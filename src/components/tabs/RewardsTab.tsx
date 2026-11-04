@@ -12,17 +12,16 @@ import type {
 import { playSound } from "@/lib/sounds";
 import { acceptNotice } from "@/app/app-actions";
 import {
-  approveSpecialOffer,
   createReward,
   deleteReward,
   finalizeCashIn,
   lockReward,
-  redeemSpecialOffer,
   requestCashIn,
   resolveCashIn,
   sendKidReward,
   updateReward,
   useCoupon,
+  useSpecialOffer,
 } from "@/app/reward-actions";
 import LockSlider from "@/components/LockSlider";
 
@@ -309,6 +308,20 @@ function TicketGlyph({ size = 20 }: { size?: number }) {
   );
 }
 
+function StarGlyph() {
+  return (
+    <svg className="rw-star" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M12 2.5l2.95 5.98 6.6.96-4.78 4.66 1.13 6.58L12 17.57l-5.9 3.1 1.13-6.57L2.45 9.44l6.6-.96L12 2.5Z"
+        fill="#f5c542"
+        stroke="#a8741a"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function GiftBg() {
   return (
     <svg className="rw-giftbg" viewBox="0 0 24 24" aria-hidden="true">
@@ -333,9 +346,9 @@ function SpecialRow({
   refresh: () => Promise<void>;
   toast: (t: string) => void;
 }) {
-  async function onRedeem() {
-    if (await run(() => redeemSpecialOffer(offer.id))) {
-      toast("Sent.");
+  async function onUse() {
+    if (await run(() => useSpecialOffer(offer.id))) {
+      toast("Used.");
       await refresh();
     }
   }
@@ -344,6 +357,7 @@ function SpecialRow({
     <div className="panel rw-row rw-special">
       <GiftBg />
       <div className="rw-line">
+        <StarGlyph />
         <div className="rw-title">{offer.title}</div>
       </div>
       {offer.bundleItems ? (
@@ -362,15 +376,9 @@ function SpecialRow({
       )}
       {offer.mine && (
         <div className="btnrow">
-          {offer.status === "PENDING" ? (
-            <button type="button" className="btn" disabled>
-              Sent — waiting for approval
-            </button>
-          ) : (
-            <button type="button" className="btn green" onClick={onRedeem}>
-              Redeem
-            </button>
-          )}
+          <button type="button" className="btn green" onClick={onUse}>
+            Use
+          </button>
         </div>
       )}
     </div>
@@ -582,13 +590,6 @@ export default function RewardsTab({
     await submitReward(overwriteId);
   }
 
-  async function onApproveSpecial(o: SpecialOfferDTO) {
-    if (await run(() => approveSpecialOffer(o.id))) {
-      toast("Approved.");
-      await refresh();
-    }
-  }
-
   async function onFinalize(q: RewardRequestDTO) {
     if (await run(() => finalizeCashIn(q.id))) {
       playSound("chaChing");
@@ -645,29 +646,6 @@ export default function RewardsTab({
               <div className="btnrow">
                 <button type="button" className="btn green" onClick={() => onFinalize(q)}>
                   Tap to finalize
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {(rw.specialPending ?? []).length > 0 && (
-        <div className="panel">
-          <h2>Special offers</h2>
-          {(rw.specialPending ?? []).map((o) => (
-            <div className="rw-req" key={o.id}>
-              <div className="rw-reqtext">
-                {o.ownerName} wants to redeem: {o.title}
-                {o.effectText ? ` — ${o.effectText}` : ""}
-              </div>
-              <div className="btnrow">
-                <button
-                  type="button"
-                  className="btn green"
-                  onClick={() => onApproveSpecial(o)}
-                >
-                  Tap to approve
                 </button>
               </div>
             </div>
