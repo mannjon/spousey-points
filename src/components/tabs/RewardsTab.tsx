@@ -55,6 +55,21 @@ function PeopleIcon({ n }: { n: 2 | 3 }) {
   );
 }
 
+function PencilGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
+      <path
+        d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path d="M14.5 6.5l3 3" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  );
+}
+
 function LockGlyph() {
   return (
     <svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true">
@@ -109,7 +124,6 @@ function RewardRow({
   toast: (t: string) => void;
   onCashInSent: (cost: number) => void;
 }) {
-  const [descOpen, setDescOpen] = useState(false);
   const [lockOpen, setLockOpen] = useState(false);
   const [lockKey, setLockKey] = useState(0);
   const [editOpen, setEditOpen] = useState(false);
@@ -210,14 +224,40 @@ function RewardRow({
   return (
     <div className={`panel rw-row${showAfford ? " rw-afford" : ""}`}>
       <div className="rw-line">
+        {mine && !isGoal ? (
+          <button
+            type="button"
+            className="rw-cost rw-coinbtn"
+            disabled={!!myRequest}
+            onClick={onCashIn}
+          >
+            {ownerTokens !== null && <CoinGlyph lit={affordable} />}
+            {myRequest
+              ? myRequest.status === "APPROVED"
+                ? "Approved"
+                : "Sent"
+              : reward.cost}
+          </button>
+        ) : (
+          <div className="rw-cost">
+            {!isGoal && ownerTokens !== null && <CoinGlyph lit={affordable} />}
+            {reward.cost}
+          </div>
+        )}
         {reward.audience !== "SELF" && (
           <PeopleIcon n={reward.audience === "FAMILY" ? 3 : 2} />
         )}
         <div className="rw-title">{reward.title}</div>
-        <div className="rw-cost">
-          {!isGoal && ownerTokens !== null && <CoinGlyph lit={affordable} />}
-          {reward.cost} <span>tokens</span>
-        </div>
+        {canEdit && !editOpen && (
+          <button
+            type="button"
+            className="rw-iconbtn"
+            aria-label="Edit this reward"
+            onClick={() => setEditOpen(true)}
+          >
+            <PencilGlyph />
+          </button>
+        )}
         {reward.locked ? (
           <span
             className="rw-lockon"
@@ -235,16 +275,16 @@ function RewardRow({
             <LockGlyph />
           </button>
         ) : null}
-        {reward.description ? (
+        {canDelete && !editOpen && (
           <button
             type="button"
-            className="rw-iconbtn rw-chev"
-            aria-label="Show description"
-            onClick={() => setDescOpen((v) => !v)}
+            className="rw-iconbtn rw-x"
+            aria-label="Remove this reward"
+            onClick={onDelete}
           >
-            {descOpen ? "▴" : "▾"}
+            ✕
           </button>
-        ) : null}
+        )}
       </div>
 
       {isGoal && (
@@ -258,10 +298,6 @@ function RewardRow({
                 }`}
         </div>
       )}
-      {reward.saved && !isGoal && <div className="rw-sub">Saved</div>}
-
-      {descOpen && reward.description && <p className="rw-desc">{reward.description}</p>}
-
       {lockOpen && !reward.locked && (
         <div className="rw-lockwrap">
           <LockSlider resetKey={lockKey} onComplete={onLockComplete} />
@@ -388,39 +424,18 @@ function RewardRow({
         </div>
       )}
 
-      {!editOpen && (
+      {!editOpen && isGoal && (
         <div className="btnrow">
-          {isGoal ? (
-            <button type="button" className="btn ghost" onClick={() => setGoalOpen((v) => !v)}>
-              {goalOpen ? "Close parts" : "Parts"}
-            </button>
-          ) : mine ? (
-            myRequest ? (
-              <button type="button" className="btn" disabled>
-                {myRequest.status === "APPROVED"
-                  ? "Approved — tap above to finalize"
-                  : "Sent — waiting"}
-              </button>
-            ) : (
-              <button type="button" className="btn green" onClick={onCashIn}>
-                Cash in
-              </button>
-            )
-          ) : section.ownerType === "CHILD" ? (
-            <button type="button" className="btn green" onClick={onSendKid}>
-              Send
-            </button>
-          ) : null}
-          {canEdit && (
-            <button type="button" className="btn ghost" onClick={() => setEditOpen(true)}>
-              Edit
-            </button>
-          )}
-          {canDelete && (
-            <button type="button" className="btn red" onClick={onDelete}>
-              Remove
-            </button>
-          )}
+          <button type="button" className="btn ghost" onClick={() => setGoalOpen((v) => !v)}>
+            {goalOpen ? "Close parts" : "Parts"}
+          </button>
+        </div>
+      )}
+      {!editOpen && !isGoal && section.ownerType === "CHILD" && (
+        <div className="btnrow">
+          <button type="button" className="btn green" onClick={onSendKid}>
+            Send
+          </button>
         </div>
       )}
     </div>
@@ -463,8 +478,8 @@ function SpecialRow({
       <GiftBg />
       <div className="rw-line">
         <div className="rw-title">{offer.title}</div>
-        <div className="rw-fx">{offer.effectText}</div>
       </div>
+      <div className="rw-sub">{offer.effectText}</div>
       {offer.mine && (
         <div className="btnrow">
           {offer.status === "PENDING" ? (
