@@ -28,7 +28,7 @@ export async function getAppData(user: User): Promise<AppData> {
   await seedRewardsIfNeeded(householdId, me.id);
   await sweepFailedGoals(householdId);
 
-  const [members, children, offers, bounties, notices, pendingInvitees, entries, seenRows, stats, allRewards, myTiers, rewardRequests, myLocks, specialOffers, coupons] =
+  const [members, children, offers, bounties, notices, pendingInvitees, entries, seenRows, stats, allRewards, rewardRequests, myLocks, specialOffers, coupons] =
     await Promise.all([
       prisma.user.findMany({
         where: { householdId, NOT: { id: me.id } },
@@ -78,10 +78,6 @@ export async function getAppData(user: User): Promise<AppData> {
         where: { householdId },
         include: { parts: true, contributions: true, lockedBy: true },
         orderBy: { createdAt: "asc" },
-      }),
-      prisma.rewardTier.findMany({
-        where: { userId: me.id },
-        orderBy: { minCost: "asc" },
       }),
       prisma.rewardRequest.findMany({
         where: {
@@ -244,7 +240,6 @@ export async function getAppData(user: User): Promise<AppData> {
   });
 
   const rewardsData = {
-    tiers: myTiers.map((t) => ({ id: t.id, minCost: t.minCost, maxCost: t.maxCost })),
     mine: rewardsFor("USER", me.id, me.screenName),
     others: [
       ...members.map((m) => rewardsFor("USER", m.id, m.screenName)),
