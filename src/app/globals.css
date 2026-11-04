@@ -740,16 +740,16 @@
       .rw-title { flex: 1; font-weight: 800; font-size: 1.02rem; min-width: 0; white-space: nowrap; overflow: hidden; }
       .rw-cost { font-weight: 800; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
       .rw-cost span { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
-      .rw-iconbtn { flex: none; width: 26px; height: 26px; border-radius: 7px; border: 1.5px solid var(--line); background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.95rem; }
-      .rw-iconbtn svg { width: 13px; height: 13px; }
+      .rw-iconbtn { flex: none; width: 44px; height: 44px; border-radius: 7px; border: 1.5px solid var(--line); background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.95rem; }
+      .rw-iconbtn svg { width: 22px; height: 22px; }
       .rw-line .rw-iconbtn ~ .rw-iconbtn, .rw-line .rw-iconbtn ~ .rw-lockon, .rw-line .rw-lockon ~ .rw-iconbtn, .rw-line .rw-lockon ~ .rw-lockon { margin-left: -6px; }
       .rw-coinbtn { background: none; border: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
       .rw-cost .rw-coindisc { flex: none; width: 32px; height: 32px; border-radius: 50%; background: radial-gradient(circle at 35% 32%, #ffe9a3, #f5c542 55%, #dd9d18); border: 2px solid #a8741a; color: #5c3d05; font-weight: 900; font-size: 0.85rem; display: inline-flex; align-items: center; justify-content: center; }
       .rw-cost .rw-coindisc.dim { opacity: 0.25; }
       .rw-coinbtn:disabled { cursor: default; opacity: 0.55; }
-      .rw-x { font-size: 0.85rem; }
-      .rw-lockon { flex: none; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; color: var(--rw-teal); }
-      .rw-lockon svg { width: 14px; height: 14px; }
+      .rw-x { font-size: 1.35rem; }
+      .rw-lockon { flex: none; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--rw-teal); }
+      .rw-lockon svg { width: 22px; height: 22px; }
       .rw-sub { margin-top: 10px; font-size: 0.86rem; color: var(--muted); font-weight: 600; }
       .rw-desc { margin: 18px 0 0; font-size: 0.95rem; }
       .rw-lockwrap { margin-top: 18px; }
