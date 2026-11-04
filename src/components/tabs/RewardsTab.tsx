@@ -700,7 +700,6 @@ export default function RewardsTab({
 
   async function onApproveSpecial(o: SpecialOfferDTO) {
     if (await run(() => approveSpecialOffer(o.id))) {
-      playSound("chaChing");
       toast("Approved.");
       await refresh();
     }
