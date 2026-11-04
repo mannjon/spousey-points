@@ -6,10 +6,12 @@ import type {
   PersonRewardsDTO,
   RewardDTO,
   RewardRequestDTO,
+  SpecialOfferDTO,
 } from "@/lib/types";
 import { playSound } from "@/lib/sounds";
 import { acceptNotice } from "@/app/app-actions";
 import {
+  approveSpecialOffer,
   contribute,
   createReward,
   createTier,
@@ -17,6 +19,7 @@ import {
   deleteTier,
   finalizeCashIn,
   lockReward,
+  redeemSpecialOffer,
   requestCashIn,
   resolveCashIn,
   sendKidReward,
@@ -137,7 +140,7 @@ function RewardRow({
     if (await run(() => requestCashIn(reward.id))) {
       toast("Sent for approval.");
       await refresh();
-      onCashInSent(reward.cost);
+      if (!reward.freeRedeem) onCashInSent(reward.cost);
     }
   }
 
@@ -424,6 +427,61 @@ function RewardRow({
   );
 }
 
+function GiftBg() {
+  return (
+    <svg className="rw-giftbg" viewBox="0 0 24 24" aria-hidden="true">
+      <g fill="none" stroke="#ffffff" strokeWidth="1.4">
+        <rect x="4" y="10" width="16" height="9.5" rx="1" />
+        <rect x="3" y="6.5" width="18" height="3.5" rx="1" />
+        <path d="M12 6.5v13" />
+        <path d="M12 6.5c-4 0-4.6-3.6-2.2-3.6C11.5 2.9 12 5 12 6.5Zm0 0c4 0 4.6-3.6 2.2-3.6C12.5 2.9 12 5 12 6.5Z" />
+      </g>
+    </svg>
+  );
+}
+
+function SpecialRow({
+  offer,
+  run,
+  refresh,
+  toast,
+}: {
+  offer: SpecialOfferDTO;
+  run: Run;
+  refresh: () => Promise<void>;
+  toast: (t: string) => void;
+}) {
+  async function onRedeem() {
+    if (await run(() => redeemSpecialOffer(offer.id))) {
+      toast("Sent.");
+      await refresh();
+    }
+  }
+
+  return (
+    <div className="panel rw-row rw-special">
+      <GiftBg />
+      <div className="rw-line">
+        <div className="rw-title">{offer.title}</div>
+        <div className="rw-fx">{offer.effectText}</div>
+      </div>
+      {offer.mine && (
+        <div className="btnrow">
+          {offer.status === "PENDING" ? (
+            <button type="button" className="btn" disabled>
+              Sent — waiting for approval
+            </button>
+          ) : (
+            <button type="button" className="btn green" onClick={onRedeem}>
+              Redeem
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ------------------------------------------------------------ one person's list
 
 function PersonSection({
@@ -479,6 +537,14 @@ function PersonSection({
   return (
     <div className="rw-section">
       <h3 className="rw-owner">{section.ownerName}</h3>
+      {section.ownerType === "USER" && (
+        <div>
+          <div className="rw-special-head">Special Offers</div>
+          {(section.specialOffers ?? []).map((o) => (
+            <SpecialRow key={o.id} offer={o} run={run} refresh={refresh} toast={toast} />
+          ))}
+        </div>
+      )}
       {groups.map((g) => (
         <div key={g.key}>
           {g.label !== null && (
@@ -632,6 +698,14 @@ export default function RewardsTab({
     await submitReward(overwriteId);
   }
 
+  async function onApproveSpecial(o: SpecialOfferDTO) {
+    if (await run(() => approveSpecialOffer(o.id))) {
+      playSound("chaChing");
+      toast("Approved.");
+      await refresh();
+    }
+  }
+
   async function onFinalize(q: RewardRequestDTO) {
     if (await run(() => finalizeCashIn(q.id))) {
       playSound("chaChing");
@@ -688,6 +762,28 @@ export default function RewardsTab({
               <div className="btnrow">
                 <button type="button" className="btn green" onClick={() => onFinalize(q)}>
                   Tap to finalize
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {(rw.specialPending ?? []).length > 0 && (
+        <div className="panel">
+          <h2>Special offers</h2>
+          {(rw.specialPending ?? []).map((o) => (
+            <div className="rw-req" key={o.id}>
+              <div className="rw-reqtext">
+                {o.ownerName} wants to redeem: {o.title} — {o.effectText}
+              </div>
+              <div className="btnrow">
+                <button
+                  type="button"
+                  className="btn green"
+                  onClick={() => onApproveSpecial(o)}
+                >
+                  Tap to approve
                 </button>
               </div>
             </div>
