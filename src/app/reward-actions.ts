@@ -269,7 +269,8 @@ export async function requestCashIn(rewardId: string): Promise<ActionResult> {
   if (!reward) return fail("Not found");
   if (reward.ownerUserId !== me.id) return fail("You can only cash in your own rewards.");
   if (reward.kind === "SHARED_GOAL") return fail("Shared goals are filled by contributing.");
-  if (me.tokens < reward.cost) return fail("You don't have enough tokens for that yet.");
+  if (!reward.freeRedeem && me.tokens < reward.cost)
+    return fail("You don't have enough tokens for that yet.");
   const existing = await prisma.rewardRequest.findFirst({
     where: { rewardId: reward.id, requesterId: me.id, status: { in: ["PENDING", "APPROVED"] } },
   });
@@ -341,15 +342,17 @@ export async function finalizeCashIn(requestId: string): Promise<ActionResult> {
   if (!req) return fail("Not found");
   if (req.requesterId !== me.id) return fail("Only the person cashing in can finalize it.");
   const fresh = await prisma.user.findUnique({ where: { id: me.id } });
-  if (!fresh || fresh.tokens < req.reward.cost) {
+  if (!req.reward.freeRedeem && (!fresh || fresh.tokens < req.reward.cost)) {
     return fail("You don't have enough tokens for that anymore.");
   }
   const others = await otherAdults(me.householdId, me.id);
   await prisma.$transaction(async (tx) => {
-    await tx.user.update({
-      where: { id: me.id },
-      data: { tokens: { decrement: req.reward.cost } },
-    });
+    if (!req.reward.freeRedeem) {
+      await tx.user.update({
+        where: { id: me.id },
+        data: { tokens: { decrement: req.reward.cost } },
+      });
+    }
     await tx.rewardRequest.update({
       where: { id: req.id },
       data: { status: "FINALIZED", resolvedAt: new Date() },
@@ -375,6 +378,10 @@ export async function finalizeCashIn(requestId: string): Promise<ActionResult> {
           amount: req.reward.cost,
         },
       });
+    }
+    if (req.reward.freeRedeem) {
+      // A granted copy is consumed by using it: the copy itself goes away.
+      await tx.reward.delete({ where: { id: req.rewardId } });
     }
   });
   revalidatePath("/");
@@ -560,6 +567,110 @@ export async function deleteTier(tierId: string): Promise<ActionResult> {
   const tier = await prisma.rewardTier.findFirst({ where: { id: tierId, userId: me.id } });
   if (!tier) return fail("Not found");
   await prisma.rewardTier.delete({ where: { id: tier.id } });
+  revalidatePath("/");
+  return ok();
+}
+
+// ------------------------------------------------------------- special offers
+
+export async function redeemSpecialOffer(offerId: string): Promise<ActionResult> {
+  const me = await getCurrentUser();
+  if (!me) return fail("Not signed in");
+  const offer = await prisma.specialOffer.findFirst({
+    where: { id: offerId, householdId: me.householdId },
+  });
+  if (!offer) return fail("Not found");
+  if (offer.ownerUserId !== me.id) return fail("That offer isn't yours.");
+  if (offer.status !== "AVAILABLE") return fail("That offer is already sent.");
+  const others = await otherAdults(me.householdId, me.id);
+  await prisma.$transaction(async (tx) => {
+    await tx.specialOffer.update({
+      where: { id: offer.id },
+      data: { status: "PENDING" },
+    });
+    for (const o of others) {
+      await tx.notice.create({
+        data: {
+          householdId: me.householdId,
+          userId: o.id,
+          kind: "SPECIAL_REDEEM",
+          text: `${me.screenName} wants to redeem a special offer: ${offer.title}`,
+          fromUserId: me.id,
+        },
+      });
+    }
+  });
+  revalidatePath("/");
+  return ok();
+}
+
+export async function approveSpecialOffer(offerId: string): Promise<ActionResult> {
+  const me = await getCurrentUser();
+  if (!me) return fail("Not signed in");
+  const offer = await prisma.specialOffer.findFirst({
+    where: { id: offerId, householdId: me.householdId },
+    include: { owner: true },
+  });
+  if (!offer) return fail("Not found");
+  if (offer.ownerUserId === me.id) return fail("You can't approve your own offer.");
+  if (offer.status !== "PENDING") return fail("That offer isn't waiting for approval.");
+  const owner = offer.owner;
+  await prisma.$transaction(async (tx) => {
+    if (offer.effect === "POINTS" && offer.amount) {
+      await tx.user.update({
+        where: { id: owner.id },
+        data: { points: { increment: offer.amount } },
+      });
+    } else if (offer.effect === "TOKENS" && offer.amount) {
+      await tx.user.update({
+        where: { id: owner.id },
+        data: { tokens: { increment: offer.amount } },
+      });
+    } else if (offer.effect === "BUNDLE") {
+      const items = Array.isArray(offer.bundle)
+        ? (offer.bundle as { title: string; qty: number; nominalCost?: number }[])
+        : [];
+      for (const item of items) {
+        for (let i = 0; i < item.qty; i++) {
+          await tx.reward.create({
+            data: {
+              householdId: me.householdId,
+              ownerUserId: owner.id,
+              createdById: me.id,
+              title: item.title,
+              cost: item.nominalCost ?? 0,
+              kind: "PERSONAL",
+              audience: "SELF",
+              saved: false,
+              freeRedeem: true,
+            },
+          });
+        }
+      }
+    }
+    await tx.specialOffer.update({
+      where: { id: offer.id },
+      data: { status: "CONSUMED", resolvedAt: new Date() },
+    });
+    await tx.logEntry.create({
+      data: {
+        householdId: me.householdId,
+        actorId: me.id,
+        subjectUserId: owner.id,
+        kind: "SPECIAL_REDEEM",
+        text: `${owner.screenName} redeemed ${offer.title}`,
+      },
+    });
+    await tx.notice.create({
+      data: {
+        householdId: me.householdId,
+        userId: owner.id,
+        kind: "SPECIAL_DONE",
+        text: `${me.screenName} approved your special offer: ${offer.title}`,
+        fromUserId: me.id,
+      },
+    });
+  });
   revalidatePath("/");
   return ok();
 }
