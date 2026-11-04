@@ -76,6 +76,7 @@ model Household {
   rewardRequests RewardRequest[]
   rewardTiers    RewardTier[]
   specialOffers  SpecialOffer[]
+  coupons        Coupon[]
 }
 
 model User {
@@ -115,6 +116,7 @@ model User {
   contributionsFor  RewardContribution[] @relation("ContributionForUser")
   rewardTiers      RewardTier[]    @relation("TierOwner")
   specialOffers    SpecialOffer[]  @relation("SpecialOwner")
+  coupons          Coupon[]        @relation("CouponOwner")
 
   @@index([householdId])
 }
@@ -426,6 +428,28 @@ model SpecialOffer {
   status      SpecialStatus @default(AVAILABLE)
   createdAt   DateTime      @default(now())
   resolvedAt  DateTime?
+
+  @@index([householdId, ownerUserId, status])
+}
+
+enum CouponStatus {
+  AVAILABLE
+  USED
+}
+
+// A single usable coupon, granted by an approved gift pack (a BUNDLE
+// special offer). Coupons stay grouped under their pack's name.
+model Coupon {
+  id          String       @id @default(cuid())
+  householdId String
+  household   Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ownerUserId String
+  owner       User         @relation("CouponOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  title       String
+  packName    String
+  status      CouponStatus @default(AVAILABLE)
+  createdAt   DateTime     @default(now())
+  usedAt      DateTime?
 
   @@index([householdId, ownerUserId, status])
 }
