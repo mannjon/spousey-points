@@ -219,10 +219,7 @@ export async function getAppData(user: User): Promise<AppData> {
 
   const rewardsData = {
     mine: rewardsFor("USER", me.id, me.screenName),
-    others: [
-      ...members.map((m) => rewardsFor("USER", m.id, m.screenName)),
-      ...children.map((c) => rewardsFor("CHILD", c.id, c.name)),
-    ],
+    others: [...children.map((c) => rewardsFor("CHILD", c.id, c.name))],
     requests: rewardRequests.map((q) => ({
         id: q.id,
         rewardId: q.rewardId,
