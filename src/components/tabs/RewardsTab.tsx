@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type {
   AppData,
   CouponDTO,
@@ -13,7 +13,6 @@ import { playSound } from "@/lib/sounds";
 import { acceptNotice } from "@/app/app-actions";
 import {
   approveSpecialOffer,
-  contribute,
   createReward,
   deleteReward,
   finalizeCashIn,
@@ -22,7 +21,6 @@ import {
   requestCashIn,
   resolveCashIn,
   sendKidReward,
-  setPartAmount,
   updateReward,
   useCoupon,
 } from "@/app/reward-actions";
@@ -30,30 +28,6 @@ import LockSlider from "@/components/LockSlider";
 
 type Run = (fn: () => Promise<{ ok: boolean; error?: string }>) => Promise<boolean>;
 
-function fmtDate(iso: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Chicago",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(iso));
-}
-
-function PeopleIcon({ n }: { n: 2 | 3 }) {
-  const person = (x: number, key: number) => (
-    <g key={key} transform={`translate(${x} 0)`}>
-      <circle cx="6" cy="4.6" r="3.1" fill="currentColor" />
-      <path d="M0.4 15.4c0-3.4 2.5-5.4 5.6-5.4s5.6 2 5.6 5.4Z" fill="currentColor" />
-    </g>
-  );
-  const w = n === 2 ? 25 : 38;
-  return (
-    <svg className="rw-people" viewBox={`0 0 ${w} 16`} width={w} height={16} aria-hidden="true">
-      {n === 2
-        ? [person(0, 0), person(13, 1)]
-        : [person(0, 0), person(13, 1), person(26, 2)]}
-    </svg>
-  );
-}
 
 function PencilGlyph() {
   return (
@@ -112,16 +86,12 @@ function RewardRow({
   const [lockOpen, setLockOpen] = useState(false);
   const [lockKey, setLockKey] = useState(0);
   const [editOpen, setEditOpen] = useState(false);
-  const [goalOpen, setGoalOpen] = useState(false);
   const [eTitle, setETitle] = useState(reward.title);
   const [eCost, setECost] = useState(String(reward.cost));
   const [eDesc, setEDesc] = useState(reward.description ?? "");
-  const [amounts, setAmounts] = useState<Record<string, string>>({});
-  const [partEdits, setPartEdits] = useState<Record<string, string>>({});
 
-  const isGoal = reward.kind === "SHARED_GOAL";
   const mine = section.ownerType === "USER" && section.ownerId === meId;
-  const affordable = isGoal || ownerTokens === null ? true : ownerTokens >= reward.cost;
+  const affordable = ownerTokens === null ? true : ownerTokens >= reward.cost;
   const band =
     reward.cost <= 10
       ? "rw-band0"
@@ -132,8 +102,19 @@ function RewardRow({
           : reward.cost <= 250
             ? "rw-band3"
             : "rw-band4";
+  const titleRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    el.style.fontSize = "";
+    let size = parseFloat(window.getComputedStyle(el).fontSize);
+    while (el.scrollWidth > el.clientWidth && size > 11) {
+      size -= 0.5;
+      el.style.fontSize = `${size}px`;
+    }
+  }, [reward.title]);
   const done = reward.status === "COMPLETED" || reward.status === "FAILED";
-  const showAfford = !isGoal && ownerTokens !== null && affordable && !done;
+  const showAfford = ownerTokens !== null && affordable && !done;
   const canLock = reward.createdById === meId && !reward.locked;
   const canDelete = !(reward.locked && reward.lockedById !== meId);
   const canEdit = mine || section.ownerType === "CHILD";
@@ -194,32 +175,10 @@ function RewardRow({
     }
   }
 
-  async function onContribute(memberKey: string) {
-    const amt = Math.floor(Number(amounts[memberKey]) || 0);
-    if (amt <= 0) {
-      toast("Enter 1 or more tokens.");
-      return;
-    }
-    if (await run(() => contribute({ rewardId: reward.id, memberKey, amount: amt }))) {
-      setAmounts((a) => ({ ...a, [memberKey]: "" }));
-      toast("Added.");
-      await refresh();
-    }
-  }
-
-  async function onSetPart(memberKey: string, current: number) {
-    const raw = partEdits[memberKey];
-    const amt = raw === undefined ? current : Math.floor(Number(raw) || 0);
-    if (await run(() => setPartAmount({ rewardId: reward.id, memberKey, amount: amt }))) {
-      toast("Part set.");
-      await refresh();
-    }
-  }
-
   return (
     <div className={`panel rw-row ${band}${showAfford ? " rw-afford" : ""}`}>
       <div className="rw-line">
-        {mine && !isGoal ? (
+        {mine ? (
           <button
             type="button"
             className="rw-cost rw-coinbtn"
@@ -246,10 +205,7 @@ function RewardRow({
             </span>
           </div>
         )}
-        {reward.audience !== "SELF" && (
-          <PeopleIcon n={reward.audience === "FAMILY" ? 3 : 2} />
-        )}
-        <div className="rw-title">{reward.title}</div>
+        <div className="rw-title" ref={titleRef}>{reward.title}</div>
         {canEdit && !editOpen && (
           <button
             type="button"
@@ -289,17 +245,6 @@ function RewardRow({
         )}
       </div>
 
-      {isGoal && (
-        <div className="rw-sub">
-          {reward.status === "COMPLETED"
-            ? "Funded"
-            : reward.status === "FAILED"
-              ? "Ended — tokens returned"
-              : `${reward.filledTotal} of ${reward.targetTotal} tokens${
-                  reward.dueDate ? ` · Due ${fmtDate(reward.dueDate)}` : ""
-                }`}
-        </div>
-      )}
       {lockOpen && !reward.locked && (
         <div className="rw-lockwrap">
           <LockSlider resetKey={lockKey} onComplete={onLockComplete} />
@@ -315,18 +260,16 @@ function RewardRow({
             <label>Title</label>
             <input value={eTitle} onChange={(e) => setETitle(e.target.value)} />
           </div>
-          {reward.kind !== "SHARED_GOAL" && (
-            <div className="field">
-              <label>Token cost</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                value={eCost}
-                onChange={(e) => setECost(e.target.value)}
-              />
-            </div>
-          )}
+          <div className="field">
+            <label>Token cost</label>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              value={eCost}
+              onChange={(e) => setECost(e.target.value)}
+            />
+          </div>
           <div className="field">
             <label>Description</label>
             <input value={eDesc} onChange={(e) => setEDesc(e.target.value)} />
@@ -342,98 +285,7 @@ function RewardRow({
         </div>
       )}
 
-      {goalOpen && isGoal && (
-        <div className="rw-goal">
-          {reward.parts.map((p) => {
-            const actionable = reward.status === "OPEN" && (p.isMe || p.isChild);
-            return (
-              <div className="rw-part" key={p.memberKey}>
-                <div className="rw-partline">
-                  <span className="rw-partname">{p.name}</span>
-                  <span className="rw-partamt">
-                    {p.contributed} of {p.amount}
-                  </span>
-                </div>
-                {actionable && (
-                  <>
-                    <div className="amtrow">
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        min={1}
-                        placeholder="Tokens"
-                        value={amounts[p.memberKey] ?? ""}
-                        onChange={(e) =>
-                          setAmounts((a) => ({ ...a, [p.memberKey]: e.target.value }))
-                        }
-                      />
-                      <button
-                        type="button"
-                        className="btn green"
-                        onClick={() => onContribute(p.memberKey)}
-                      >
-                        Add
-                      </button>
-                    </div>
-                    <div className="amtrow" style={{ marginTop: 18 }}>
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        min={0}
-                        placeholder={`Part: ${p.amount}`}
-                        value={partEdits[p.memberKey] ?? ""}
-                        onChange={(e) =>
-                          setPartEdits((a) => ({ ...a, [p.memberKey]: e.target.value }))
-                        }
-                      />
-                      <button
-                        type="button"
-                        className="btn ghost"
-                        onClick={() => onSetPart(p.memberKey, p.amount)}
-                      >
-                        Set part
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            );
-          })}
-          {reward.status === "OPEN" && (
-            <div className="rw-part">
-              <div className="rw-partline">
-                <span className="rw-partname">Extra from my tokens</span>
-              </div>
-              <div className="amtrow">
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  placeholder="Tokens"
-                  value={amounts["extra"] ?? ""}
-                  onChange={(e) => setAmounts((a) => ({ ...a, extra: e.target.value }))}
-                />
-                <button
-                  type="button"
-                  className="btn green"
-                  onClick={() => onContribute("extra")}
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {!editOpen && isGoal && (
-        <div className="btnrow">
-          <button type="button" className="btn ghost" onClick={() => setGoalOpen((v) => !v)}>
-            {goalOpen ? "Close parts" : "Parts"}
-          </button>
-        </div>
-      )}
-      {!editOpen && !isGoal && section.ownerType === "CHILD" && (
+      {!editOpen && section.ownerType === "CHILD" && (
         <div className="btnrow">
           <button type="button" className="btn green" onClick={onSendKid}>
             Send
@@ -676,9 +528,8 @@ export default function RewardsTab({
   const [title, setTitle] = useState("");
   const [cost, setCost] = useState("");
   const [desc, setDesc] = useState("");
-  const [kind, setKind] = useState<"PERSONAL" | "SHARED_SOLO" | "SHARED_GOAL">("PERSONAL");
+  const [kind, setKind] = useState<"PERSONAL" | "SHARED_SOLO">("PERSONAL");
   const [audience, setAudience] = useState<"PLUS_ONE" | "FAMILY">("FAMILY");
-  const [dueDate, setDueDate] = useState("");
   const [saveIt, setSaveIt] = useState(true);
   const [overwriteId, setOverwriteId] = useState<string | null>(null);
   const [showOverwrite, setShowOverwrite] = useState(false);
@@ -701,7 +552,6 @@ export default function RewardsTab({
     setDesc("");
     setKind("PERSONAL");
     setAudience("FAMILY");
-    setDueDate("");
     setSaveIt(true);
     setOverwriteId(null);
     setShowOverwrite(false);
@@ -720,7 +570,6 @@ export default function RewardsTab({
           kind,
           audience: kind === "PERSONAL" ? "SELF" : audience,
           saved: saveIt,
-          dueDate,
           overwriteId: overwrite,
         })
       )
@@ -921,7 +770,6 @@ export default function RewardsTab({
           <select value={kind} onChange={(e) => setKind(e.target.value as typeof kind)}>
             <option value="PERSONAL">Personal</option>
             <option value="SHARED_SOLO">Shared — one person pays</option>
-            <option value="SHARED_GOAL">Shared goal — everyone fills a part</option>
           </select>
         </div>
         {kind !== "PERSONAL" && (
@@ -931,12 +779,6 @@ export default function RewardsTab({
               <option value="PLUS_ONE">One other person</option>
               <option value="FAMILY">Whole family</option>
             </select>
-          </div>
-        )}
-        {kind === "SHARED_GOAL" && (
-          <div className="field">
-            <label>Due date</label>
-            <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
           </div>
         )}
         <div className="field">
