@@ -5,7 +5,7 @@ import { getLogStats } from "./stats";
 import { isIndirect } from "./log";
 import { addDaysToDateString, chicagoDateString, wallParts } from "./time";
 import { memberKey, seedRewardsIfNeeded, sweepFailedGoals } from "./rewards";
-import type { AppData, BountyDTO, PersonRewardsDTO, RewardDTO, SpecialOfferDTO } from "./types";
+import type { AppData, BountyDTO, CouponDTO, PersonRewardsDTO, RewardDTO, SpecialOfferDTO } from "./types";
 
 // Loads everything the app shell renders, household-scoped. Runs the lazy
 // weekly engine first, then lazily expires open bounties past their due
@@ -28,7 +28,7 @@ export async function getAppData(user: User): Promise<AppData> {
   await seedRewardsIfNeeded(householdId, me.id);
   await sweepFailedGoals(householdId);
 
-  const [members, children, offers, bounties, notices, pendingInvitees, entries, seenRows, stats, allRewards, myTiers, rewardRequests, myLocks, specialOffers] =
+  const [members, children, offers, bounties, notices, pendingInvitees, entries, seenRows, stats, allRewards, myTiers, rewardRequests, myLocks, specialOffers, coupons] =
     await Promise.all([
       prisma.user.findMany({
         where: { householdId, NOT: { id: me.id } },
@@ -97,6 +97,10 @@ export async function getAppData(user: User): Promise<AppData> {
       prisma.specialOffer.findMany({
         where: { householdId, status: { in: ["AVAILABLE", "PENDING"] } },
         include: { owner: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.coupon.findMany({
+        where: { householdId, status: "AVAILABLE" },
         orderBy: { createdAt: "asc" },
       }),
     ]);
@@ -197,9 +201,23 @@ export async function getAppData(user: User): Promise<AppData> {
     ownerId: o.ownerUserId,
     ownerName: o.owner.screenName,
     title: o.title,
-    effectText: specialEffectText(o),
+    effectText: o.effect === "BUNDLE" ? "" : specialEffectText(o),
     status: o.status,
     mine: o.ownerUserId === me.id,
+    bundleItems:
+      o.effect === "BUNDLE" && Array.isArray(o.bundle)
+        ? (o.bundle as { title: string; qty: number }[]).map((i) => ({
+            title: i.title,
+            qty: i.qty,
+          }))
+        : undefined,
+  });
+
+  const toCouponDTO = (c: (typeof coupons)[number]): CouponDTO => ({
+    id: c.id,
+    title: c.title,
+    packName: c.packName,
+    mine: c.ownerUserId === me.id,
   });
 
   const rewardsFor = (
@@ -218,6 +236,10 @@ export async function getAppData(user: User): Promise<AppData> {
     specialOffers:
       ownerType === "USER"
         ? specialOffers.filter((o) => o.ownerUserId === ownerId).map(toSpecialDTO)
+        : [],
+    coupons:
+      ownerType === "USER"
+        ? coupons.filter((c) => c.ownerUserId === ownerId).map(toCouponDTO)
         : [],
   });
 
