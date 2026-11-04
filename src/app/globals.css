@@ -709,10 +709,18 @@
       .rw-h { font-size: 1.15rem; font-weight: 800; color: var(--rw-teal); margin: 0; }
       .rw-section { margin-top: 18px; }
       .rw-owner { font-size: 1.05rem; font-weight: 800; margin: 0; }
-      .rw-row { border-color: var(--rw-teal); }
-      .rw-coin { flex: none; }
+      .rw-row { border-color: var(--rw-teal); box-shadow: 0 5px 12px rgba(0, 0, 0, 0.5); }
+      .rw-band0 { background: #dfe3df; border-color: #37473d; color: #26332c; }
+      .rw-band1 { background: #a3d426; border-color: #3d5a0a; color: #324d08; }
+      .rw-band2 { background: #1e9fe3; border-color: #0b4a73; color: #083c5e; }
+      .rw-band3 { background: #a55eea; border-color: #3d1450; color: #320f45; }
+      .rw-band4 { background: #ff9f1a; border-color: #7a3c06; color: #6e3505; }
+      .rw-band0 .rw-iconbtn, .rw-band1 .rw-iconbtn, .rw-band2 .rw-iconbtn, .rw-band3 .rw-iconbtn, .rw-band4 .rw-iconbtn { color: inherit; border-color: currentColor; }
+      .rw-band0 .rw-people, .rw-band1 .rw-people, .rw-band2 .rw-people, .rw-band3 .rw-people, .rw-band4 .rw-people { color: inherit; }
+      .rw-band0 .rw-lockon, .rw-band1 .rw-lockon, .rw-band2 .rw-lockon, .rw-band3 .rw-lockon, .rw-band4 .rw-lockon { color: inherit; }
+      .rw-band0 .rw-sub, .rw-band1 .rw-sub, .rw-band2 .rw-sub, .rw-band3 .rw-sub, .rw-band4 .rw-sub { color: inherit; }
       .rw-special-head { margin-top: 18px; padding: 12px 18px; border-radius: 12px; border: 1.5px solid var(--rw-teal); color: var(--rw-teal); font-weight: 800; }
-      .rw-special { position: relative; overflow: hidden; margin-top: 18px; }
+      .rw-special { position: relative; overflow: hidden; margin-top: 18px; box-shadow: 0 5px 12px rgba(0, 0, 0, 0.5); }
       .rw-special > * { position: relative; }
       .rw-special > .rw-giftbg { position: absolute; }
       .rw-giftbg { right: 10px; top: 50%; transform: translateY(-50%); height: 92px; width: 92px; opacity: 0.3; pointer-events: none; }
@@ -720,7 +728,7 @@
       .rw-chip { display: inline-flex; align-items: center; gap: 6px; border: 1.5px dashed var(--rw-teal); border-radius: 9px; padding: 7px 10px; font-size: 13.5px; font-weight: 700; }
       .rw-chip svg { color: var(--rw-teal); flex: none; }
       .rw-packname { font-weight: 800; margin-top: 18px; }
-      .rw-coupon { display: flex; align-items: center; gap: 12px; border: 1.5px dashed var(--rw-teal); border-radius: 12px; padding: 12px 14px; margin-top: 10px; }
+      .rw-coupon { display: flex; align-items: center; gap: 12px; border: 1.5px dashed var(--rw-teal); border-radius: 12px; padding: 12px 14px; margin-top: 10px; box-shadow: 0 5px 12px rgba(0, 0, 0, 0.5); }
       .rw-coupon-stub { border-right: 1.5px dashed var(--rw-teal); padding-right: 12px; display: flex; color: var(--rw-teal); }
       .rw-coupon-name { flex: 1; font-weight: 800; }
       .rw-use { padding: 9px 18px; }
@@ -734,6 +742,8 @@
       .rw-cost span { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
       .rw-iconbtn { flex: none; width: 38px; height: 38px; border-radius: 10px; border: 1.5px solid var(--line); background: transparent; color: var(--muted); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.95rem; }
       .rw-coinbtn { background: none; border: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+      .rw-cost .rw-coindisc { flex: none; width: 44px; height: 44px; border-radius: 50%; background: radial-gradient(circle at 35% 32%, #ffe9a3, #f5c542 55%, #dd9d18); border: 2.5px solid #a8741a; color: #5c3d05; font-weight: 900; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; }
+      .rw-cost .rw-coindisc.dim { opacity: 0.25; }
       .rw-coinbtn:disabled { cursor: default; opacity: 0.55; }
       .rw-x { font-size: 1rem; }
       .rw-lockon { flex: none; width: 38px; height: 38px; display: inline-flex; align-items: center; justify-content: center; color: var(--rw-teal); }
