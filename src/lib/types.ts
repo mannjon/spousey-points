@@ -98,14 +98,6 @@ export type StatsDTO = {
   avgFreeTimePct: number;
 };
 
-export type RewardPartDTO = {
-  memberKey: string;
-  name: string;
-  isChild: boolean;
-  isMe: boolean;
-  amount: number;
-  contributed: number;
-};
 
 export type RewardDTO = {
   id: string;
@@ -122,10 +114,6 @@ export type RewardDTO = {
   lockedByName: string | null;
   createdById: string;
   status: string;
-  dueDate: string | null;
-  parts: RewardPartDTO[];
-  filledTotal: number;
-  targetTotal: number;
   createdAt: string;
 };
 
