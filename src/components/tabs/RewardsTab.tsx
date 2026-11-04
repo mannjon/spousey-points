@@ -84,21 +84,6 @@ function LockGlyph() {
   );
 }
 
-function CoinGlyph({ lit }: { lit: boolean }) {
-  return (
-    <svg className="rw-coin" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-      <circle cx="12" cy="12" r="10" fill={lit ? "#a8741a" : "#5f6b66"} />
-      <circle cx="12" cy="12" r="7.4" fill={lit ? "#f5c542" : "#8b968f"} />
-      <g transform="translate(6.9 7.3) scale(0.425)">
-        <path
-          d="M12 21s-8-5.5-8-11a4.5 4.5 0 0 1 8-3 4.5 4.5 0 0 1 8 3c0 5.5-8 11-8 11Z"
-          fill={lit ? "#a8741a" : "#5f6b66"}
-        />
-      </g>
-    </svg>
-  );
-}
-
 // ------------------------------------------------------------ one reward row
 
 function RewardRow({
@@ -137,6 +122,16 @@ function RewardRow({
   const isGoal = reward.kind === "SHARED_GOAL";
   const mine = section.ownerType === "USER" && section.ownerId === meId;
   const affordable = isGoal || ownerTokens === null ? true : ownerTokens >= reward.cost;
+  const band =
+    reward.cost <= 10
+      ? "rw-band0"
+      : reward.cost <= 25
+        ? "rw-band1"
+        : reward.cost <= 100
+          ? "rw-band2"
+          : reward.cost <= 250
+            ? "rw-band3"
+            : "rw-band4";
   const done = reward.status === "COMPLETED" || reward.status === "FAILED";
   const showAfford = !isGoal && ownerTokens !== null && affordable && !done;
   const canLock = reward.createdById === meId && !reward.locked;
@@ -222,7 +217,7 @@ function RewardRow({
   }
 
   return (
-    <div className={`panel rw-row${showAfford ? " rw-afford" : ""}`}>
+    <div className={`panel rw-row ${band}${showAfford ? " rw-afford" : ""}`}>
       <div className="rw-line">
         {mine && !isGoal ? (
           <button
@@ -231,17 +226,24 @@ function RewardRow({
             disabled={!!myRequest}
             onClick={onCashIn}
           >
-            {ownerTokens !== null && <CoinGlyph lit={affordable} />}
+            <span
+              className={`rw-coindisc${ownerTokens !== null && !affordable ? " dim" : ""}`}
+            >
+              {reward.cost}
+            </span>
             {myRequest
               ? myRequest.status === "APPROVED"
                 ? "Approved"
                 : "Sent"
-              : reward.cost}
+              : null}
           </button>
         ) : (
           <div className="rw-cost">
-            {!isGoal && ownerTokens !== null && <CoinGlyph lit={affordable} />}
-            {reward.cost}
+            <span
+              className={`rw-coindisc${ownerTokens !== null && !affordable ? " dim" : ""}`}
+            >
+              {reward.cost}
+            </span>
           </div>
         )}
         {reward.audience !== "SELF" && (
