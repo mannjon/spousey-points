@@ -75,6 +75,7 @@ model Household {
   rewards        Reward[]
   rewardRequests RewardRequest[]
   rewardTiers    RewardTier[]
+  specialOffers  SpecialOffer[]
 }
 
 model User {
@@ -113,6 +114,7 @@ model User {
   contributionsFrom RewardContribution[] @relation("ContributionFromUser")
   contributionsFor  RewardContribution[] @relation("ContributionForUser")
   rewardTiers      RewardTier[]    @relation("TierOwner")
+  specialOffers    SpecialOffer[]  @relation("SpecialOwner")
 
   @@index([householdId])
 }
@@ -314,6 +316,7 @@ model Reward {
   audience    RewardAudience @default(SELF)
   isDefault   Boolean        @default(false)
   saved       Boolean        @default(false)
+  freeRedeem  Boolean        @default(false)
   status      RewardStatus   @default(ACTIVE)
   dueDate     DateTime?
 
@@ -393,6 +396,38 @@ model RewardRequest {
 
   @@index([householdId, status])
   @@index([requesterId, status])
+}
+
+enum SpecialEffect {
+  POINTS
+  TOKENS
+  BUNDLE
+}
+
+enum SpecialStatus {
+  AVAILABLE
+  PENDING
+  CONSUMED
+}
+
+// One-time offers in the permanent Special Offers category. Redeem only
+// notifies the other adults; their in-person tap consumes the offer and
+// applies its effect.
+model SpecialOffer {
+  id          String        @id @default(cuid())
+  householdId String
+  household   Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ownerUserId String
+  owner       User          @relation("SpecialOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  title       String
+  effect      SpecialEffect
+  amount      Int?
+  bundle      Json?
+  status      SpecialStatus @default(AVAILABLE)
+  createdAt   DateTime      @default(now())
+  resolvedAt  DateTime?
+
+  @@index([householdId, ownerUserId, status])
 }
 
 // Cost-range groups for a user's reward list. Seeded with the default
