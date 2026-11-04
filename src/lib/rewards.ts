@@ -1,9 +1,9 @@
 import { prisma } from "./prisma";
 
-// Shared reward helpers: member keys, the default tier ranges and default
-// reward examples, lazy seeding, and shared-goal failure handling (a goal
-// that misses its due date fails for everyone and every contributed token
-// goes back to the bank it came from).
+// Shared reward helpers: member keys, the default reward examples, lazy
+// seeding, and shared-goal failure handling (a goal that misses its due
+// date fails for everyone and every contributed token goes back to the
+// bank it came from).
 
 export const memberKey = (userId: string | null, childId: string | null) =>
   userId ? `u:${userId}` : `c:${childId ?? ""}`;
@@ -13,19 +13,6 @@ export function parseMemberKey(key: string): { userId: string | null; childId: s
   if (key.startsWith("c:")) return { userId: null, childId: key.slice(2) };
   return { userId: null, childId: null };
 }
-
-// His default ranges, verbatim: 0-5, 6-10, 11-25, 26-100, 101-250,
-// 250-1000, 1000+. (250 sits in two ranges as he wrote them; a reward
-// lands in the first range, lowest first, that contains its cost.)
-export const DEFAULT_TIERS: { minCost: number; maxCost: number | null }[] = [
-  { minCost: 0, maxCost: 5 },
-  { minCost: 6, maxCost: 10 },
-  { minCost: 11, maxCost: 25 },
-  { minCost: 26, maxCost: 100 },
-  { minCost: 101, maxCost: 250 },
-  { minCost: 250, maxCost: 1000 },
-  { minCost: 1000, maxCost: null },
-];
 
 export function evenSplit(total: number, n: number): number[] {
   if (n <= 0) return [];
@@ -140,18 +127,13 @@ export async function householdMembers(
   ];
 }
 
-// Seeds the viewing user's tiers and default rewards once, and each
-// child's default rewards once. Runs lazily on data load, like the rest
-// of the app's lazy engines.
+// Seeds the viewing user's default rewards once, and each child's
+// default rewards once. Runs lazily on data load, like the rest of the
+// app's lazy engines.
 export async function seedRewardsIfNeeded(householdId: string, viewerId: string) {
   const viewer = await prisma.user.findUnique({ where: { id: viewerId } });
   if (viewer && !viewer.rewardsSeeded) {
     await prisma.$transaction(async (tx) => {
-      for (const t of DEFAULT_TIERS) {
-        await tx.rewardTier.create({
-          data: { householdId, userId: viewerId, minCost: t.minCost, maxCost: t.maxCost },
-        });
-      }
       await createDefaultRewards(tx, householdId, { userId: viewerId, childId: null }, viewerId);
       await tx.user.update({ where: { id: viewerId }, data: { rewardsSeeded: true } });
     });
