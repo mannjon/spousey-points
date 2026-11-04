@@ -15,9 +15,7 @@ import {
   approveSpecialOffer,
   contribute,
   createReward,
-  createTier,
   deleteReward,
-  deleteTier,
   finalizeCashIn,
   lockReward,
   redeemSpecialOffer,
@@ -562,7 +560,6 @@ function CouponRow({
 
 function PersonSection({
   section,
-  tiers,
   meId,
   ownerTokens,
   requests,
@@ -573,7 +570,6 @@ function PersonSection({
   onCashInSent,
 }: {
   section: PersonRewardsDTO;
-  tiers: AppData["rewards"]["tiers"];
   meId: string;
   ownerTokens: number | null;
   requests: RewardRequestDTO[];
@@ -583,32 +579,9 @@ function PersonSection({
   toast: (t: string) => void;
   onCashInSent: (cost: number) => void;
 }) {
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const sorted = [...section.rewards].sort(
     (a, b) => a.cost - b.cost || a.createdAt.localeCompare(b.createdAt)
   );
-  const groups: { key: string; label: string | null; rows: RewardDTO[] }[] = [];
-  if (tiers.length === 0) {
-    groups.push({ key: "all", label: null, rows: sorted });
-  } else {
-    const used = new Set<string>();
-    for (const t of tiers) {
-      const rows = sorted.filter(
-        (r) =>
-          !used.has(r.id) && r.cost >= t.minCost && (t.maxCost === null || r.cost <= t.maxCost)
-      );
-      rows.forEach((r) => used.add(r.id));
-      if (rows.length) {
-        groups.push({
-          key: t.id,
-          label: t.maxCost === null ? `${t.minCost}+ tokens` : `${t.minCost}–${t.maxCost} tokens`,
-          rows,
-        });
-      }
-    }
-    const rest = sorted.filter((r) => !used.has(r.id));
-    if (rest.length) groups.push({ key: "other", label: "Other", rows: rest });
-  }
 
   return (
     <div className="rw-section">
@@ -631,37 +604,20 @@ function PersonSection({
           ))}
         </div>
       )}
-      {groups.map((g) => (
-        <div key={g.key}>
-          {g.label !== null && (
-            <button
-              type="button"
-              className="rw-tierhead"
-              onClick={() => setCollapsed((c) => ({ ...c, [g.key]: !c[g.key] }))}
-            >
-              <span>{g.label}</span>
-              <span>
-                {g.rows.length} {collapsed[g.key] ? "▸" : "▾"}
-              </span>
-            </button>
-          )}
-          {!collapsed[g.key] &&
-            g.rows.map((r) => (
-              <RewardRow
-                key={r.id}
-                reward={r}
-                section={section}
-                meId={meId}
-                ownerTokens={ownerTokens}
-                requests={requests}
-                locksUsedByMe={locksUsedByMe}
-                run={run}
-                refresh={refresh}
-                toast={toast}
-                onCashInSent={onCashInSent}
-              />
-            ))}
-        </div>
+      {sorted.map((r) => (
+        <RewardRow
+          key={r.id}
+          reward={r}
+          section={section}
+          meId={meId}
+          ownerTokens={ownerTokens}
+          requests={requests}
+          locksUsedByMe={locksUsedByMe}
+          run={run}
+          refresh={refresh}
+          toast={toast}
+          onCashInSent={onCashInSent}
+        />
       ))}
       {section.rewards.length === 0 && <div className="rw-sub">No rewards yet.</div>}
     </div>
@@ -724,9 +680,6 @@ export default function RewardsTab({
   const [saveIt, setSaveIt] = useState(true);
   const [overwriteId, setOverwriteId] = useState<string | null>(null);
   const [showOverwrite, setShowOverwrite] = useState(false);
-
-  const [tierMin, setTierMin] = useState("");
-  const [tierMax, setTierMax] = useState("");
 
   const ownerOf = (key: string) => ownerOptions.find((o) => o.key === key) ?? ownerOptions[0];
   const personFor = (key: string) => {
@@ -895,7 +848,6 @@ export default function RewardsTab({
 
       <PersonSection
         section={rw.mine}
-        tiers={rw.tiers}
         meId={me.id}
         ownerTokens={me.tokens}
         requests={rw.requests}
@@ -909,7 +861,6 @@ export default function RewardsTab({
         <PersonSection
           key={`${p.ownerType}:${p.ownerId}`}
           section={p}
-          tiers={rw.tiers}
           meId={me.id}
           ownerTokens={
             p.ownerType === "CHILD"
@@ -924,65 +875,6 @@ export default function RewardsTab({
           onCashInSent={onCashInSent}
         />
       ))}
-
-      <div className="panel">
-        <h2>Tiers</h2>
-        {rw.tiers.map((t) => (
-          <div className="rw-tierline" key={t.id}>
-            <span>
-              {t.maxCost === null ? `${t.minCost}+ tokens` : `${t.minCost}–${t.maxCost} tokens`}
-            </span>
-            <button
-              type="button"
-              className="btn ghost rw-small"
-              onClick={async () => {
-                if (await run(() => deleteTier(t.id))) {
-                  toast("Tier removed.");
-                  await refresh();
-                }
-              }}
-            >
-              Remove
-            </button>
-          </div>
-        ))}
-        <div className="amtrow" style={{ marginTop: 18 }}>
-          <input
-            type="number"
-            inputMode="numeric"
-            min={0}
-            placeholder="From"
-            value={tierMin}
-            onChange={(e) => setTierMin(e.target.value)}
-          />
-          <input
-            type="number"
-            inputMode="numeric"
-            min={0}
-            placeholder="To (blank = no top)"
-            value={tierMax}
-            onChange={(e) => setTierMax(e.target.value)}
-          />
-        </div>
-        <div className="btnrow">
-          <button
-            type="button"
-            className="btn green"
-            onClick={async () => {
-              const min = Math.floor(Number(tierMin) || 0);
-              const max = tierMax.trim() === "" ? null : Math.floor(Number(tierMax) || 0);
-              if (await run(() => createTier({ minCost: min, maxCost: max }))) {
-                setTierMin("");
-                setTierMax("");
-                toast("Tier added.");
-                await refresh();
-              }
-            }}
-          >
-            Add tier
-          </button>
-        </div>
-      </div>
 
       <div className="panel">
         <h2>Add a reward</h2>
