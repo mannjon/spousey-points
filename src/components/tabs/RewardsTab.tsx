@@ -511,12 +511,6 @@ export default function RewardsTab({
 
   const ownerOptions = [
     { key: `u:${me.id}`, label: "Me", type: "USER" as const, id: me.id },
-    ...data.members.map((m) => ({
-      key: `u:${m.id}`,
-      label: m.screenName,
-      type: "USER" as const,
-      id: m.id,
-    })),
     ...data.children.map((c) => ({
       key: `c:${c.id}`,
       label: c.name,
