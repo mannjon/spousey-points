@@ -712,6 +712,12 @@
       .rw-tierhead { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 18px; padding: 12px 18px; border-radius: 12px; border: 1.5px solid var(--rw-teal); background: transparent; color: var(--rw-teal); font: inherit; font-weight: 800; cursor: pointer; }
       .rw-row { border-color: var(--rw-teal); }
       .rw-coin { flex: none; }
+      .rw-special-head { margin-top: 18px; padding: 12px 18px; border-radius: 12px; border: 1.5px solid var(--rw-teal); color: var(--rw-teal); font-weight: 800; }
+      .rw-special { position: relative; overflow: hidden; margin-top: 18px; }
+      .rw-special > * { position: relative; }
+      .rw-special > .rw-giftbg { position: absolute; }
+      .rw-giftbg { right: 10px; top: 50%; transform: translateY(-50%); height: 92px; width: 92px; opacity: 0.3; pointer-events: none; }
+      .rw-fx { font-weight: 800; text-align: right; }
       @keyframes rwPulse { 0%, 100% { border-color: #ffffff; } 50% { border-color: #b8860b; } }
       .rw-row.rw-afford { animation: rwPulse 1.6s ease-in-out infinite; }
       @media (prefers-reduced-motion: reduce) { .rw-row.rw-afford { animation: none; } }
