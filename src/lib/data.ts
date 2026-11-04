@@ -5,7 +5,7 @@ import { getLogStats } from "./stats";
 import { isIndirect } from "./log";
 import { addDaysToDateString, chicagoDateString, wallParts } from "./time";
 import { memberKey, seedRewardsIfNeeded, sweepFailedGoals } from "./rewards";
-import type { AppData, BountyDTO, PersonRewardsDTO, RewardDTO } from "./types";
+import type { AppData, BountyDTO, PersonRewardsDTO, RewardDTO, SpecialOfferDTO } from "./types";
 
 // Loads everything the app shell renders, household-scoped. Runs the lazy
 // weekly engine first, then lazily expires open bounties past their due
@@ -28,7 +28,7 @@ export async function getAppData(user: User): Promise<AppData> {
   await seedRewardsIfNeeded(householdId, me.id);
   await sweepFailedGoals(householdId);
 
-  const [members, children, offers, bounties, notices, pendingInvitees, entries, seenRows, stats, allRewards, myTiers, rewardRequests, myLocks] =
+  const [members, children, offers, bounties, notices, pendingInvitees, entries, seenRows, stats, allRewards, myTiers, rewardRequests, myLocks, specialOffers] =
     await Promise.all([
       prisma.user.findMany({
         where: { householdId, NOT: { id: me.id } },
@@ -93,6 +93,11 @@ export async function getAppData(user: User): Promise<AppData> {
       }),
       prisma.reward.count({
         where: { householdId, locked: true, lockedById: me.id },
+      }),
+      prisma.specialOffer.findMany({
+        where: { householdId, status: { in: ["AVAILABLE", "PENDING"] } },
+        include: { owner: true },
+        orderBy: { createdAt: "asc" },
       }),
     ]);
 
@@ -164,6 +169,7 @@ export async function getAppData(user: User): Promise<AppData> {
       audience: r.audience,
       isDefault: r.isDefault,
       saved: r.saved,
+      freeRedeem: r.freeRedeem,
       locked: r.locked,
       lockedById: r.lockedById,
       lockedByName: r.lockedBy?.screenName ?? null,
@@ -176,6 +182,25 @@ export async function getAppData(user: User): Promise<AppData> {
       createdAt: r.createdAt.toISOString(),
     };
   };
+
+  const specialEffectText = (o: (typeof specialOffers)[number]): string => {
+    if (o.effect === "POINTS") return `+${o.amount ?? 0} points`;
+    if (o.effect === "TOKENS") return `+${o.amount ?? 0} tokens`;
+    const items = Array.isArray(o.bundle)
+      ? (o.bundle as { title: string; qty: number }[])
+      : [];
+    return items.map((i) => `${i.qty}× ${i.title}`).join(" · ");
+  };
+
+  const toSpecialDTO = (o: (typeof specialOffers)[number]): SpecialOfferDTO => ({
+    id: o.id,
+    ownerId: o.ownerUserId,
+    ownerName: o.owner.screenName,
+    title: o.title,
+    effectText: specialEffectText(o),
+    status: o.status,
+    mine: o.ownerUserId === me.id,
+  });
 
   const rewardsFor = (
     ownerType: "USER" | "CHILD",
@@ -190,6 +215,10 @@ export async function getAppData(user: User): Promise<AppData> {
         ownerType === "USER" ? r.ownerUserId === ownerId : r.ownerChildId === ownerId
       )
       .map(toRewardDTO),
+    specialOffers:
+      ownerType === "USER"
+        ? specialOffers.filter((o) => o.ownerUserId === ownerId).map(toSpecialDTO)
+        : [],
   });
 
   const rewardsData = {
@@ -211,6 +240,9 @@ export async function getAppData(user: User): Promise<AppData> {
         mine: q.requesterId === me.id,
       })),
     locksUsedByMe: myLocks,
+    specialPending: specialOffers
+      .filter((o) => o.status === "PENDING" && o.ownerUserId !== me.id)
+      .map(toSpecialDTO),
   };
 
   const p = wallParts(now);
