@@ -129,12 +129,6 @@ export type RewardDTO = {
   createdAt: string;
 };
 
-export type RewardTierDTO = {
-  id: string;
-  minCost: number;
-  maxCost: number | null;
-};
-
 export type SpecialOfferDTO = {
   id: string;
   ownerId: string;
@@ -175,7 +169,6 @@ export type RewardRequestDTO = {
 };
 
 export type RewardsDataDTO = {
-  tiers: RewardTierDTO[];
   mine: PersonRewardsDTO;
   others: PersonRewardsDTO[];
   requests: RewardRequestDTO[];
