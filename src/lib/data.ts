@@ -4,7 +4,7 @@ import { runWeeklyEngine } from "./engine";
 import { getLogStats } from "./stats";
 import { isIndirect } from "./log";
 import { addDaysToDateString, chicagoDateString, wallParts } from "./time";
-import { memberKey, seedRewardsIfNeeded, sweepFailedGoals } from "./rewards";
+import { seedRewardsIfNeeded } from "./rewards";
 import type { AppData, BountyDTO, CouponDTO, PersonRewardsDTO, RewardDTO, SpecialOfferDTO } from "./types";
 
 // Loads everything the app shell renders, household-scoped. Runs the lazy
@@ -26,7 +26,6 @@ export async function getAppData(user: User): Promise<AppData> {
   });
 
   await seedRewardsIfNeeded(householdId, me.id);
-  await sweepFailedGoals(householdId);
 
   const [members, children, offers, bounties, notices, pendingInvitees, entries, seenRows, stats, allRewards, rewardRequests, myLocks, specialOffers, coupons] =
     await Promise.all([
@@ -76,7 +75,7 @@ export async function getAppData(user: User): Promise<AppData> {
       getLogStats(me.id, householdId, now),
       prisma.reward.findMany({
         where: { householdId },
-        include: { parts: true, contributions: true, lockedBy: true },
+        include: { lockedBy: true },
         orderBy: { createdAt: "asc" },
       }),
       prisma.rewardRequest.findMany({
@@ -143,23 +142,6 @@ export async function getAppData(user: User): Promise<AppData> {
     id ? (children.find((c) => c.id === id)?.name ?? null) : null;
 
   const toRewardDTO = (r: (typeof allRewards)[number]): RewardDTO => {
-    const parts = r.parts.map((pt) => {
-      const contributed = r.contributions
-        .filter(
-          (c) =>
-            (pt.memberUserId && c.partUserId === pt.memberUserId) ||
-            (pt.memberChildId && c.partChildId === pt.memberChildId)
-        )
-        .reduce((s, c) => s + c.amount, 0);
-      return {
-        memberKey: memberKey(pt.memberUserId, pt.memberChildId),
-        name: pt.memberUserId ? (nameOf(pt.memberUserId) ?? "") : (childName(pt.memberChildId) ?? ""),
-        isChild: !!pt.memberChildId,
-        isMe: pt.memberUserId === me.id,
-        amount: pt.amount,
-        contributed,
-      };
-    });
     return {
       id: r.id,
       title: r.title,
@@ -175,10 +157,6 @@ export async function getAppData(user: User): Promise<AppData> {
       lockedByName: r.lockedBy?.screenName ?? null,
       createdById: r.createdById,
       status: r.status,
-      dueDate: r.dueDate ? r.dueDate.toISOString() : null,
-      parts,
-      filledTotal: r.contributions.reduce((s, c) => s + c.amount, 0),
-      targetTotal: parts.length ? parts.reduce((s, pt) => s + pt.amount, 0) : r.cost,
       createdAt: r.createdAt.toISOString(),
     };
   };
