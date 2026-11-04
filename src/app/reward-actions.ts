@@ -535,42 +535,6 @@ export async function setPartAmount(input: {
   return ok();
 }
 
-// ------------------------------------------------------------------ tiers
-
-export async function createTier(input: {
-  minCost: number;
-  maxCost: number | null;
-}): Promise<ActionResult> {
-  const me = await getCurrentUser();
-  if (!me) return fail("Not signed in");
-  if (!Number.isInteger(input.minCost) || input.minCost < 0) {
-    return fail("Enter a starting cost of 0 or more.");
-  }
-  if (input.maxCost !== null && (!Number.isInteger(input.maxCost) || input.maxCost <= input.minCost)) {
-    return fail("The top of the range must be above the start.");
-  }
-  const tier = await prisma.rewardTier.create({
-    data: {
-      householdId: me.householdId,
-      userId: me.id,
-      minCost: input.minCost,
-      maxCost: input.maxCost,
-    },
-  });
-  revalidatePath("/");
-  return ok(tier.id);
-}
-
-export async function deleteTier(tierId: string): Promise<ActionResult> {
-  const me = await getCurrentUser();
-  if (!me) return fail("Not signed in");
-  const tier = await prisma.rewardTier.findFirst({ where: { id: tierId, userId: me.id } });
-  if (!tier) return fail("Not found");
-  await prisma.rewardTier.delete({ where: { id: tier.id } });
-  revalidatePath("/");
-  return ok();
-}
-
 // ------------------------------------------------------------- special offers
 
 export async function redeemSpecialOffer(offerId: string): Promise<ActionResult> {
