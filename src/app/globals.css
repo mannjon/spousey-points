@@ -717,6 +717,14 @@
       .rw-special > * { position: relative; }
       .rw-special > .rw-giftbg { position: absolute; }
       .rw-giftbg { right: 10px; top: 50%; transform: translateY(-50%); height: 92px; width: 92px; opacity: 0.3; pointer-events: none; }
+      .rw-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+      .rw-chip { display: inline-flex; align-items: center; gap: 6px; border: 1.5px dashed var(--rw-teal); border-radius: 9px; padding: 7px 10px; font-size: 13.5px; font-weight: 700; }
+      .rw-chip svg { color: var(--rw-teal); flex: none; }
+      .rw-packname { font-weight: 800; margin-top: 18px; }
+      .rw-coupon { display: flex; align-items: center; gap: 12px; border: 1.5px dashed var(--rw-teal); border-radius: 12px; padding: 12px 14px; margin-top: 10px; }
+      .rw-coupon-stub { border-right: 1.5px dashed var(--rw-teal); padding-right: 12px; display: flex; color: var(--rw-teal); }
+      .rw-coupon-name { flex: 1; font-weight: 800; }
+      .rw-use { padding: 9px 18px; }
       @keyframes rwPulse { 0%, 100% { border-color: #ffffff; } 50% { border-color: #b8860b; } }
       .rw-row.rw-afford { animation: rwPulse 1.6s ease-in-out infinite; }
       @media (prefers-reduced-motion: reduce) { .rw-row.rw-afford { animation: none; } }
