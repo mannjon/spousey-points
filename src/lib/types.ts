@@ -161,7 +161,6 @@ export type RewardsDataDTO = {
   others: PersonRewardsDTO[];
   requests: RewardRequestDTO[];
   locksUsedByMe: number;
-  specialPending?: SpecialOfferDTO[];
 };
 
 export type AppData = {
