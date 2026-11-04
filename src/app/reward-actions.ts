@@ -357,57 +357,28 @@ export async function finalizeCashIn(requestId: string): Promise<ActionResult> {
 
 // ------------------------------------------------------------- special offers
 
-export async function redeemSpecialOffer(offerId: string): Promise<ActionResult> {
+// Special rewards are presents: they sit in the owner's Special Offers
+// already available, and using one applies it right away — no redeem
+// request, no approval. Using one logs it and lets the other adults know.
+export async function useSpecialOffer(offerId: string): Promise<ActionResult> {
   const me = await getCurrentUser();
   if (!me) return fail("Not signed in");
   const offer = await prisma.specialOffer.findFirst({
     where: { id: offerId, householdId: me.householdId },
   });
   if (!offer) return fail("Not found");
-  if (offer.ownerUserId !== me.id) return fail("That offer isn't yours.");
-  if (offer.status !== "AVAILABLE") return fail("That offer is already sent.");
+  if (offer.ownerUserId !== me.id) return fail("That special reward isn't yours.");
+  if (offer.status !== "AVAILABLE") return fail("That special reward is already used.");
   const others = await otherAdults(me.householdId, me.id);
-  await prisma.$transaction(async (tx) => {
-    await tx.specialOffer.update({
-      where: { id: offer.id },
-      data: { status: "PENDING" },
-    });
-    for (const o of others) {
-      await tx.notice.create({
-        data: {
-          householdId: me.householdId,
-          userId: o.id,
-          kind: "SPECIAL_REDEEM",
-          text: `${me.screenName} wants to redeem a special offer: ${offer.title}`,
-          fromUserId: me.id,
-        },
-      });
-    }
-  });
-  revalidatePath("/");
-  return ok();
-}
-
-export async function approveSpecialOffer(offerId: string): Promise<ActionResult> {
-  const me = await getCurrentUser();
-  if (!me) return fail("Not signed in");
-  const offer = await prisma.specialOffer.findFirst({
-    where: { id: offerId, householdId: me.householdId },
-    include: { owner: true },
-  });
-  if (!offer) return fail("Not found");
-  if (offer.ownerUserId === me.id) return fail("You can't approve your own offer.");
-  if (offer.status !== "PENDING") return fail("That offer isn't waiting for approval.");
-  const owner = offer.owner;
   await prisma.$transaction(async (tx) => {
     if (offer.effect === "POINTS" && offer.amount) {
       await tx.user.update({
-        where: { id: owner.id },
+        where: { id: me.id },
         data: { points: { increment: offer.amount } },
       });
     } else if (offer.effect === "TOKENS" && offer.amount) {
       await tx.user.update({
-        where: { id: owner.id },
+        where: { id: me.id },
         data: { tokens: { increment: offer.amount } },
       });
     } else if (offer.effect === "BUNDLE") {
@@ -419,7 +390,7 @@ export async function approveSpecialOffer(offerId: string): Promise<ActionResult
           await tx.coupon.create({
             data: {
               householdId: me.householdId,
-              ownerUserId: owner.id,
+              ownerUserId: me.id,
               title: item.title,
               packName: offer.title,
             },
@@ -435,20 +406,22 @@ export async function approveSpecialOffer(offerId: string): Promise<ActionResult
       data: {
         householdId: me.householdId,
         actorId: me.id,
-        subjectUserId: owner.id,
-        kind: "SPECIAL_REDEEM",
-        text: `${owner.screenName} redeemed ${offer.title}`,
+        subjectUserId: me.id,
+        kind: "SPECIAL",
+        text: `${me.screenName} used a special reward: ${offer.title}`,
       },
     });
-    await tx.notice.create({
-      data: {
-        householdId: me.householdId,
-        userId: owner.id,
-        kind: "SPECIAL_DONE",
-        text: `${me.screenName} approved your special offer: ${offer.title}`,
-        fromUserId: me.id,
-      },
-    });
+    for (const o of others) {
+      await tx.notice.create({
+        data: {
+          householdId: me.householdId,
+          userId: o.id,
+          kind: "SPECIAL_USED",
+          text: `${me.screenName} used a special reward: ${offer.title}`,
+          fromUserId: me.id,
+        },
+      });
+    }
   });
   revalidatePath("/");
   return ok();
