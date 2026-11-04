@@ -90,7 +90,7 @@ export async function getAppData(user: User): Promise<AppData> {
         where: { householdId, locked: true, lockedById: me.id },
       }),
       prisma.specialOffer.findMany({
-        where: { householdId, status: { in: ["AVAILABLE", "PENDING"] } },
+        where: { householdId, status: "AVAILABLE" },
         include: { owner: true },
         orderBy: { createdAt: "asc" },
       }),
@@ -232,9 +232,6 @@ export async function getAppData(user: User): Promise<AppData> {
         mine: q.requesterId === me.id,
       })),
     locksUsedByMe: myLocks,
-    specialPending: specialOffers
-      .filter((o) => o.status === "PENDING" && o.ownerUserId !== me.id)
-      .map(toSpecialDTO),
   };
 
   const p = wallParts(now);
