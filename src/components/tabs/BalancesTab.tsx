@@ -305,7 +305,7 @@ export default function BalancesTab({
           <input
             type="text"
             id="redeem-reason"
-            placeholder="e.g. Guilt-free nap, no questions asked"
+            placeholder="e.g. Dinner out, no questions asked"
             value={redeemReason}
             onChange={(e) => setRedeemReason(e.target.value)}
           />
