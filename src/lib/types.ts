@@ -116,6 +116,7 @@ export type RewardDTO = {
   audience: string;
   isDefault: boolean;
   saved: boolean;
+  freeRedeem?: boolean;
   locked: boolean;
   lockedById: string | null;
   lockedByName: string | null;
@@ -134,11 +135,22 @@ export type RewardTierDTO = {
   maxCost: number | null;
 };
 
+export type SpecialOfferDTO = {
+  id: string;
+  ownerId: string;
+  ownerName: string;
+  title: string;
+  effectText: string;
+  status: string;
+  mine: boolean;
+};
+
 export type PersonRewardsDTO = {
   ownerType: "USER" | "CHILD";
   ownerId: string;
   ownerName: string;
   rewards: RewardDTO[];
+  specialOffers?: SpecialOfferDTO[];
 };
 
 export type RewardRequestDTO = {
@@ -159,6 +171,7 @@ export type RewardsDataDTO = {
   others: PersonRewardsDTO[];
   requests: RewardRequestDTO[];
   locksUsedByMe: number;
+  specialPending?: SpecialOfferDTO[];
 };
 
 export type AppData = {
