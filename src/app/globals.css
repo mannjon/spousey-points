@@ -708,6 +708,7 @@
       @media (prefers-color-scheme: dark) { .rw { --rw-teal: #2dd4bf; } }
       .rw-h { font-size: 1.15rem; font-weight: 800; color: var(--rw-teal); margin: 0; }
       .rw-section { margin-top: 18px; }
+      .rw-section + .rw-section { padding-top: 18px; }
       .rw-owner { font-size: 1.05rem; font-weight: 800; margin: 0; }
       .rw-row { border-color: var(--rw-teal); box-shadow: 0 5px 12px rgba(0, 0, 0, 0.5); padding-top: 10px; padding-bottom: 10px; }
       .rw-band0 { background: #dfe3df; border-color: #37473d; color: #26332c; }
