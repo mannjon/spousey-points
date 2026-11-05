@@ -721,24 +721,27 @@
       .rw-band0 .rw-iconbtn, .rw-band1 .rw-iconbtn, .rw-band2 .rw-iconbtn, .rw-band3 .rw-iconbtn, .rw-band4 .rw-iconbtn { color: inherit; border-color: currentColor; }
       .rw-band0 .rw-lockon, .rw-band1 .rw-lockon, .rw-band2 .rw-lockon, .rw-band3 .rw-lockon, .rw-band4 .rw-lockon { color: inherit; }
       .rw-band0 .rw-sub, .rw-band1 .rw-sub, .rw-band2 .rw-sub, .rw-band3 .rw-sub, .rw-band4 .rw-sub { color: inherit; }
-      .rw-special-box { border: 1.5px solid #a8741a; border-radius: 12px; padding: 0; margin-top: 18px; overflow: hidden; animation: rwBoxPulse 1.6s ease-in-out infinite; }
-      .rw-special-body { padding: 18px; }
+      .rw-special-box { border: 1.5px solid #a8741a; border-radius: 12px; padding: 0; margin-top: 18px; overflow: hidden; }
+      .rw-special-box.open { box-shadow: 0 5px 12px rgba(0, 0, 0, 0.5); }
+      .rw-special-body { padding: 18px; display: flex; flex-direction: column; gap: 18px; }
+      .rw-special-body .rw-special { margin-top: 0; }
       @keyframes rwBoxPulse { 0%, 100% { border-color: #a8741a; } 50% { border-color: #ffffff; } }
       @keyframes rwStarPulse { 0%, 100% { fill: #f5c542; stroke: #a8741a; } 50% { fill: #ffffff; stroke: #ffffff; } }
       .rw-star path { animation: rwStarPulse 1.6s ease-in-out infinite; }
       .rw-confirm { position: relative; }
       .rw-special > .sheet { position: fixed; }
-      .rw-confirm-x { position: absolute; top: 0; right: 0; width: 40px; height: 40px; border: none; background: transparent; font-size: 1.15rem; cursor: pointer; color: var(--ink); }
-      .rw-confirm-q { font-size: 1.3rem; font-weight: 800; text-align: center; padding: 26px 12px 8px; }
+      .rw-confirm-x { width: 40px; height: 40px; flex: none; border: none; background: transparent; font-size: 1.15rem; cursor: pointer; color: var(--ink); }
+      .rw-confirm-q { font-size: 1.3rem; font-weight: 800; text-align: left; padding: 0; }
+      .rw-confirm-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
       .rw-special-head { margin-top: 0; padding: 12px 18px; border-radius: 12px; border: 1.5px solid #a8741a; background: #ffe9a3; color: #6e3505; font-weight: 800; }
       .rw-special-box .rw-special-head { border: none; border-radius: 0; }
       .rw-special-toggle { width: 100%; font: inherit; text-align: left; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
-      .rw-special { position: relative; overflow: hidden; margin-top: 18px; box-shadow: 0 5px 12px rgba(0, 0, 0, 0.5); background: linear-gradient(180deg, #ffd94d, #f5b921); border: 1.5px solid #a8741a; color: #6e3505; cursor: pointer; }
+      .rw-special { position: relative; overflow: hidden; margin-top: 18px; box-shadow: 0 5px 12px rgba(0, 0, 0, 0.5); background: linear-gradient(180deg, #ffd94d, #f5b921); border: 1.5px solid #a8741a; color: #6e3505; cursor: pointer; display: flex; flex-direction: column; justify-content: center; }
       .rw-special > * { position: relative; }
       .rw-special > .rw-giftbg { position: absolute; }
       .rw-special .rw-sub { color: inherit; }
       .rw-star { flex: none; width: 32px; height: 32px; }
-      .rw-giftbg { right: 12px; top: 4px; height: 72px; width: 72px; opacity: 0.3; pointer-events: none; }
+      .rw-giftbg { right: 12px; top: 4px; height: calc(100% - 8px); width: auto; aspect-ratio: 1; opacity: 0.3; pointer-events: none; }
       .rw-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
       .rw-chip { display: inline-flex; align-items: center; gap: 6px; border: 1.5px dashed #a8741a; border-radius: 9px; padding: 7px 10px; font-size: 13.5px; font-weight: 700; }
       .rw-chip svg { color: #a8741a; flex: none; }
