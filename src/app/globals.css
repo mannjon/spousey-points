@@ -735,7 +735,7 @@
       .rw-special-head { margin-top: 0; height: 49px; box-sizing: border-box; padding: 0 18px; border-radius: 12px; border: 1.5px solid #a8741a; background: #ffe9a3; color: #6e3505; font-weight: 800; }
       .rw-special-box .rw-special-head { border: none; border-bottom: 1.5px solid #a8741a; border-radius: 0; }
       .rw-special-toggle { width: 100%; font: inherit; text-align: left; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
-      .rw-chev { font-size: 28px; line-height: 1; }
+      .rw-chev { font-size: 44px; line-height: 1; }
       .rw-special { position: relative; overflow: hidden; margin-top: 18px; border-radius: 12px; box-shadow: 0 5px 12px rgba(0, 0, 0, 0.5); background: linear-gradient(180deg, #ffd94d, #f5b921); border: 1.5px solid #a8741a; color: #6e3505; cursor: pointer; display: flex; flex-direction: column; justify-content: center; }
       .rw-special > * { position: relative; }
       .rw-special > .rw-giftbg { position: absolute; }
