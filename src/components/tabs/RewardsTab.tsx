@@ -379,9 +379,7 @@ function SpecialRow({
             ))
           )}
         </div>
-      ) : (
-        <div className="rw-sub">{offer.effectText}</div>
-      )}
+      ) : null}
       {confirming && (
         <div
           className="sheet open"
@@ -495,26 +493,41 @@ function PersonSection({
   const sorted = [...section.rewards].sort(
     (a, b) => a.cost - b.cost || a.createdAt.localeCompare(b.createdAt)
   );
+  const [specialOpen, setSpecialOpen] = useState(false);
 
   return (
     <div className="rw-section">
       <h3 className="rw-owner">{section.ownerName}</h3>
       {section.ownerType === "USER" && (
         <div className="rw-special-box">
-          <div className="rw-special-head">Special Offers</div>
-          {(section.specialOffers ?? []).map((o) => (
-            <SpecialRow key={o.id} offer={o} run={run} refresh={refresh} toast={toast} />
-          ))}
-          {[...new Set((section.coupons ?? []).map((c) => c.packName))].map((pack) => (
-            <div key={pack}>
-              <div className="rw-packname">{pack}</div>
-              {(section.coupons ?? [])
-                .filter((c) => c.packName === pack)
-                .map((c) => (
-                  <CouponRow key={c.id} coupon={c} run={run} refresh={refresh} toast={toast} />
-                ))}
+          <button
+            type="button"
+            className="rw-special-head rw-special-toggle"
+            aria-expanded={specialOpen}
+            onClick={() => setSpecialOpen((v) => !v)}
+          >
+            <span>Special Offers</span>
+            <span className="rw-chev" aria-hidden="true">
+              {specialOpen ? "▴" : "▾"}
+            </span>
+          </button>
+          {specialOpen && (
+            <div className="rw-special-body">
+              {(section.specialOffers ?? []).map((o) => (
+                <SpecialRow key={o.id} offer={o} run={run} refresh={refresh} toast={toast} />
+              ))}
+              {[...new Set((section.coupons ?? []).map((c) => c.packName))].map((pack) => (
+                <div key={pack}>
+                  <div className="rw-packname">{pack}</div>
+                  {(section.coupons ?? [])
+                    .filter((c) => c.packName === pack)
+                    .map((c) => (
+                      <CouponRow key={c.id} coupon={c} run={run} refresh={refresh} toast={toast} />
+                    ))}
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
       )}
       {sorted.map((r) => (
