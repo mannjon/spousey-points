@@ -391,16 +391,18 @@ function SpecialRow({
           }}
         >
           <div className="box rw-confirm">
-            <button
-              type="button"
-              className="rw-confirm-x"
-              aria-label="Close"
-              onClick={() => setConfirming(false)}
-            >
-              ✕
-            </button>
-            <div className="rw-confirm-q">
-              Redeem {offer.effectText ? offer.effectText : offer.title}?
+            <div className="rw-confirm-top">
+              <div className="rw-confirm-q">
+                Redeem {offer.effectText ? offer.effectText : offer.title}?
+              </div>
+              <button
+                type="button"
+                className="rw-confirm-x"
+                aria-label="Close"
+                onClick={() => setConfirming(false)}
+              >
+                ✕
+              </button>
             </div>
             <div
               style={{
@@ -499,7 +501,7 @@ function PersonSection({
     <div className="rw-section">
       <h3 className="rw-owner">{section.ownerName}</h3>
       {section.ownerType === "USER" && (
-        <div className="rw-special-box">
+        <div className={specialOpen ? "rw-special-box open" : "rw-special-box"}>
           <button
             type="button"
             className="rw-special-head rw-special-toggle"
