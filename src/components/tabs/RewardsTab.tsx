@@ -346,15 +346,23 @@ function SpecialRow({
   refresh: () => Promise<void>;
   toast: (t: string) => void;
 }) {
-  async function onUse() {
+  const [confirming, setConfirming] = useState(false);
+
+  async function onConfirm() {
     if (await run(() => useSpecialOffer(offer.id))) {
+      setConfirming(false);
       toast("Used.");
       await refresh();
     }
   }
 
   return (
-    <div className="panel rw-row rw-special">
+    <div
+      className="panel rw-row rw-special"
+      onClick={() => {
+        if (offer.mine) setConfirming(true);
+      }}
+    >
       <GiftBg />
       <div className="rw-line">
         <StarGlyph />
@@ -374,11 +382,54 @@ function SpecialRow({
       ) : (
         <div className="rw-sub">{offer.effectText}</div>
       )}
-      {offer.mine && (
-        <div className="btnrow">
-          <button type="button" className="btn green" onClick={onUse}>
-            Use
-          </button>
+      {confirming && (
+        <div
+          className="sheet open"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (e.target === e.currentTarget) setConfirming(false);
+          }}
+        >
+          <div className="box rw-confirm">
+            <button
+              type="button"
+              className="rw-confirm-x"
+              aria-label="Close"
+              onClick={() => setConfirming(false)}
+            >
+              ✕
+            </button>
+            <div className="rw-confirm-q">
+              Redeem {offer.effectText ? offer.effectText : offer.title}?
+            </div>
+            <div
+              style={{
+                display: "flex",
+                gap: 12,
+                justifyContent: "flex-end",
+                marginTop: 18,
+              }}
+            >
+              <button
+                type="button"
+                className="btn red"
+                aria-label="No"
+                onClick={() => setConfirming(false)}
+              >
+                ✕
+              </button>
+              <button
+                type="button"
+                className="btn green"
+                aria-label="Yes"
+                onClick={onConfirm}
+              >
+                ✓
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -449,7 +500,7 @@ function PersonSection({
     <div className="rw-section">
       <h3 className="rw-owner">{section.ownerName}</h3>
       {section.ownerType === "USER" && (
-        <div>
+        <div className="rw-special-box">
           <div className="rw-special-head">Special Offers</div>
           {(section.specialOffers ?? []).map((o) => (
             <SpecialRow key={o.id} offer={o} run={run} refresh={refresh} toast={toast} />
