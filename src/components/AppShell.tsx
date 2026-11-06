@@ -15,6 +15,7 @@ import LogTab from "./tabs/LogTab";
 import RewardsTab from "./tabs/RewardsTab";
 import BountyModal from "./BountyModal";
 import OfferSheet from "./OfferSheet";
+import AnniversaryCard from "./AnniversaryCard";
 
 type TabKey = "home" | "spend" | "bounties" | "family" | "rewards" | "log";
 
@@ -473,6 +474,16 @@ export default function AppShell({
             </form>
           </div>
         </div>
+      ) : null}
+
+      {data.me.screenName === "Eliz" &&
+      data.members.some((m) => m.screenName === "Jonathan") ? (
+        <AnniversaryCard meId={data.me.id} />
+      ) : null}
+
+      {data.me.screenName === "Jonathan" &&
+      data.members.some((m) => m.screenName === "Eliz") ? (
+        <AnniversaryCard meId={data.me.id} navy />
       ) : null}
 
       <nav className="tabbar" aria-label="Sections">
