@@ -725,7 +725,7 @@
       .rw-special-body { padding: 18px; display: flex; flex-direction: column; gap: 18px; }
       .rw-special-body .rw-special { margin-top: 0; }
       @keyframes rwStarPulse { 0%, 100% { fill: #f5c542; stroke: #a8741a; } 50% { fill: #ffffff; stroke: #ffffff; } }
-      .rw-star path { animation: rwStarPulse 1.6s ease-in-out infinite; }
+      .rw-special .rw-star path { animation: rwStarPulse 1.6s ease-in-out infinite; }
       .rw-confirm { position: relative; }
       .rw-special > .sheet { position: fixed; }
       .rw-confirm-x { width: 40px; height: 40px; flex: none; border: none; background: transparent; font-size: 1.15rem; cursor: pointer; color: var(--ink); }
@@ -737,11 +737,12 @@
       .rw-chev { font-size: 44px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; height: 32px; }
       .rw-special { position: relative; overflow: hidden; margin-top: 18px; min-height: 51px; padding-top: 0; padding-bottom: 0; border-radius: 12px; box-shadow: 0 5px 12px rgba(0, 0, 0, 0.5); background: linear-gradient(180deg, #ffd94d, #f5b921); border: 1.5px solid #a8741a; color: #6e3505; cursor: pointer; display: flex; flex-direction: column; justify-content: center; }
       .rw-special .rw-line { justify-content: center; }
+      .rw-special .rw-title { flex: none; }
       .rw-special > * { position: relative; }
       .rw-special > .rw-giftbg { position: absolute; }
       .rw-special .rw-sub { color: inherit; }
       .rw-star { flex: none; width: 32px; height: 32px; }
-      .rw-giftbg { right: 12px; top: 4px; height: calc(100% - 8px); width: auto; aspect-ratio: 1; opacity: 0.3; pointer-events: none; }
+      .rw-giftbg { left: 50%; transform: translateX(-50%); top: 4px; height: calc(100% - 8px); width: auto; aspect-ratio: 1; opacity: 0.3; pointer-events: none; }
       .rw-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
       .rw-chip { display: inline-flex; align-items: center; gap: 6px; border: 1.5px dashed #a8741a; border-radius: 9px; padding: 7px 10px; font-size: 13.5px; font-weight: 700; }
       .rw-chip svg { color: #a8741a; flex: none; }
