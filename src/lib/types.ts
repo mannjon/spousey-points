@@ -125,14 +125,6 @@ export type SpecialOfferDTO = {
   effectText: string;
   status: string;
   mine: boolean;
-  bundleItems?: { title: string; qty: number }[];
-};
-
-export type CouponDTO = {
-  id: string;
-  title: string;
-  packName: string;
-  mine: boolean;
 };
 
 export type PersonRewardsDTO = {
@@ -141,7 +133,6 @@ export type PersonRewardsDTO = {
   ownerName: string;
   rewards: RewardDTO[];
   specialOffers?: SpecialOfferDTO[];
-  coupons?: CouponDTO[];
 };
 
 export type RewardRequestDTO = {
