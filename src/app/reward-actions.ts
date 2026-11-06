@@ -381,22 +381,6 @@ export async function useSpecialOffer(offerId: string): Promise<ActionResult> {
         where: { id: me.id },
         data: { tokens: { increment: offer.amount } },
       });
-    } else if (offer.effect === "BUNDLE") {
-      const items = Array.isArray(offer.bundle)
-        ? (offer.bundle as { title: string; qty: number }[])
-        : [];
-      for (const item of items) {
-        for (let i = 0; i < item.qty; i++) {
-          await tx.coupon.create({
-            data: {
-              householdId: me.householdId,
-              ownerUserId: me.id,
-              title: item.title,
-              packName: offer.title,
-            },
-          });
-        }
-      }
     }
     await tx.specialOffer.update({
       where: { id: offer.id },
@@ -418,46 +402,6 @@ export async function useSpecialOffer(offerId: string): Promise<ActionResult> {
           userId: o.id,
           kind: "SPECIAL_USED",
           text: `${me.screenName} used a special reward: ${offer.title}`,
-          fromUserId: me.id,
-        },
-      });
-    }
-  });
-  revalidatePath("/");
-  return ok();
-}
-
-export async function useCoupon(couponId: string): Promise<ActionResult> {
-  const me = await getCurrentUser();
-  if (!me) return fail("Not signed in");
-  const coupon = await prisma.coupon.findFirst({
-    where: { id: couponId, householdId: me.householdId },
-  });
-  if (!coupon) return fail("Not found");
-  if (coupon.ownerUserId !== me.id) return fail("That coupon isn't yours.");
-  if (coupon.status !== "AVAILABLE") return fail("That coupon is already used.");
-  const others = await otherAdults(me.householdId, me.id);
-  await prisma.$transaction(async (tx) => {
-    await tx.coupon.update({
-      where: { id: coupon.id },
-      data: { status: "USED", usedAt: new Date() },
-    });
-    await tx.logEntry.create({
-      data: {
-        householdId: me.householdId,
-        actorId: me.id,
-        subjectUserId: me.id,
-        kind: "COUPON",
-        text: `${me.screenName} used a coupon: ${coupon.title}`,
-      },
-    });
-    for (const o of others) {
-      await tx.notice.create({
-        data: {
-          householdId: me.householdId,
-          userId: o.id,
-          kind: "COUPON_USED",
-          text: `${me.screenName} used a coupon: ${coupon.title}`,
           fromUserId: me.id,
         },
       });
