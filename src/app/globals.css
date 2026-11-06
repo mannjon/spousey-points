@@ -722,7 +722,7 @@
       .rw-band0 .rw-lockon, .rw-band1 .rw-lockon, .rw-band2 .rw-lockon, .rw-band3 .rw-lockon, .rw-band4 .rw-lockon { color: inherit; }
       .rw-band0 .rw-sub, .rw-band1 .rw-sub, .rw-band2 .rw-sub, .rw-band3 .rw-sub, .rw-band4 .rw-sub { color: inherit; }
       .rw-special-box { border: 1.5px solid #a8741a; border-radius: 12px; padding: 0; margin-top: 18px; overflow: hidden; box-shadow: 0 5px 12px rgba(0, 0, 0, 0.5); }
-      .rw-special-body { padding: 18px 0; display: flex; flex-direction: column; gap: 18px; }
+      .rw-special-body { padding: 18px; display: flex; flex-direction: column; gap: 18px; }
       .rw-special-body .rw-special { margin-top: 0; }
       @keyframes rwBoxPulse { 0%, 100% { border-color: #a8741a; } 50% { border-color: #ffffff; } }
       @keyframes rwStarPulse { 0%, 100% { fill: #f5c542; stroke: #a8741a; } 50% { fill: #ffffff; stroke: #ffffff; } }
