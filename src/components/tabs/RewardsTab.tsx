@@ -368,7 +368,7 @@ function SpecialRow({
         <div className="rw-title">{offer.title}</div>
         <GiftBg />
       </div>
-      {offer.bundleItems ? (
+      {offer.bundleItems && offer.bundleItems.length > 0 ? (
         <div className="rw-chips">
           {offer.bundleItems.flatMap((i) =>
             Array.from({ length: i.qty }, (_, k) => (
