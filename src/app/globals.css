@@ -736,13 +736,10 @@
       .rw-special-toggle { width: 100%; font: inherit; text-align: left; cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
       .rw-chev { font-size: 44px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; height: 32px; }
       .rw-special { position: relative; overflow: hidden; margin-top: 18px; min-height: 51px; padding-top: 0; padding-bottom: 0; border-radius: 12px; box-shadow: 0 5px 12px rgba(0, 0, 0, 0.5); background: linear-gradient(180deg, #ffd94d, #f5b921); border: 1.5px solid #a8741a; color: #6e3505; cursor: pointer; display: flex; flex-direction: column; justify-content: center; }
-      .rw-special .rw-line { justify-content: center; }
-      .rw-special .rw-title { flex: none; }
       .rw-special > * { position: relative; }
-      .rw-special > .rw-giftbg { position: absolute; }
       .rw-special .rw-sub { color: inherit; }
       .rw-star { flex: none; width: 32px; height: 32px; }
-      .rw-giftbg { left: 50%; transform: translateX(-50%); top: 4px; height: calc(100% - 8px); width: auto; aspect-ratio: 1; opacity: 0.3; pointer-events: none; }
+      .rw-giftbg { height: 43px; width: auto; aspect-ratio: 1; opacity: 0.3; pointer-events: none; }
       .rw-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
       .rw-chip { display: inline-flex; align-items: center; gap: 6px; border: 1.5px dashed #a8741a; border-radius: 9px; padding: 7px 10px; font-size: 13.5px; font-weight: 700; }
       .rw-chip svg { color: #a8741a; flex: none; }
