@@ -740,14 +740,6 @@
       .rw-special .rw-sub { color: inherit; }
       .rw-star { flex: none; width: 32px; height: 32px; }
       .rw-giftbg { height: 43px; width: auto; aspect-ratio: 1; opacity: 0.3; pointer-events: none; }
-      .rw-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-      .rw-chips:empty { display: none; }
-      .rw-chip { display: inline-flex; align-items: center; gap: 6px; border: 1.5px dashed #a8741a; border-radius: 9px; padding: 7px 10px; font-size: 13.5px; font-weight: 700; }
-      .rw-chip svg { color: #a8741a; flex: none; }
-      .rw-packname { font-weight: 800; margin-top: 18px; }
-      .rw-coupon { display: flex; align-items: center; gap: 12px; border: 1.5px dashed #a8741a; background: #fff3c4; color: #6e3505; border-radius: 12px; padding: 12px 14px; margin-top: 10px; box-shadow: 0 5px 12px rgba(0, 0, 0, 0.5); }
-      .rw-coupon-stub { border-right: 1.5px dashed #a8741a; padding-right: 12px; display: flex; color: #a8741a; }
-      .rw-coupon-name { flex: 1; font-weight: 800; }
       .rw-use { padding: 9px 18px; }
       @keyframes rwPulse { 0%, 100% { border-color: #ffffff; } 50% { border-color: #b8860b; } }
       .rw-row.rw-afford { animation: rwPulse 1.6s ease-in-out infinite; }
