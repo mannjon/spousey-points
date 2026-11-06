@@ -508,8 +508,10 @@ function PersonSection({
             aria-expanded={specialOpen}
             onClick={() => setSpecialOpen((v) => !v)}
           >
-            <StarGlyph />
-            <span>Special Offers</span>
+            <span className="rw-line">
+              <StarGlyph />
+              <span>Special Offers</span>
+            </span>
             <span className="rw-chev" aria-hidden="true">
               {specialOpen ? "▴" : "▾"}
             </span>
