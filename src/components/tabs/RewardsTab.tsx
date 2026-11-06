@@ -363,10 +363,10 @@ function SpecialRow({
         if (offer.mine) setConfirming(true);
       }}
     >
-      <GiftBg />
       <div className="rw-line">
         <StarGlyph />
         <div className="rw-title">{offer.title}</div>
+        <GiftBg />
       </div>
       {offer.bundleItems ? (
         <div className="rw-chips">
