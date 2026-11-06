@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import type {
   AppData,
-  CouponDTO,
   PersonRewardsDTO,
   RewardDTO,
   RewardRequestDTO,
@@ -20,7 +19,6 @@ import {
   resolveCashIn,
   sendKidReward,
   updateReward,
-  useCoupon,
   useSpecialOffer,
 } from "@/app/reward-actions";
 import LockSlider from "@/components/LockSlider";
@@ -295,19 +293,6 @@ function RewardRow({
   );
 }
 
-function TicketGlyph({ size = 20 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true">
-      <path
-        d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2.5 2.5 0 0 0 0 5v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2.5 2.5 0 0 0 0-5Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
-    </svg>
-  );
-}
-
 function StarGlyph() {
   return (
     <svg className="rw-star" viewBox="0 0 24 24" aria-hidden="true">
@@ -368,18 +353,6 @@ function SpecialRow({
         <div className="rw-title">{offer.title}</div>
         <GiftBg />
       </div>
-      {offer.bundleItems ? (
-        <div className="rw-chips">
-          {offer.bundleItems.flatMap((i) =>
-            Array.from({ length: i.qty }, (_, k) => (
-              <span className="rw-chip" key={`${i.title}-${k}`}>
-                <TicketGlyph size={15} />
-                {i.title}
-              </span>
-            ))
-          )}
-        </div>
-      ) : null}
       {confirming && (
         <div
           className="sheet open"
@@ -436,39 +409,6 @@ function SpecialRow({
   );
 }
 
-function CouponRow({
-  coupon,
-  run,
-  refresh,
-  toast,
-}: {
-  coupon: CouponDTO;
-  run: Run;
-  refresh: () => Promise<void>;
-  toast: (t: string) => void;
-}) {
-  async function onUse() {
-    if (await run(() => useCoupon(coupon.id))) {
-      toast("Used.");
-      await refresh();
-    }
-  }
-
-  return (
-    <div className="rw-coupon">
-      <span className="rw-coupon-stub">
-        <TicketGlyph />
-      </span>
-      <span className="rw-coupon-name">{coupon.title}</span>
-      {coupon.mine && (
-        <button type="button" className="btn green rw-use" onClick={onUse}>
-          Use
-        </button>
-      )}
-    </div>
-  );
-}
-
 // ------------------------------------------------------------ one person's list
 
 function PersonSection({
@@ -520,16 +460,6 @@ function PersonSection({
             <div className="rw-special-body">
               {(section.specialOffers ?? []).map((o) => (
                 <SpecialRow key={o.id} offer={o} run={run} refresh={refresh} toast={toast} />
-              ))}
-              {[...new Set((section.coupons ?? []).map((c) => c.packName))].map((pack) => (
-                <div key={pack}>
-                  <div className="rw-packname">{pack}</div>
-                  {(section.coupons ?? [])
-                    .filter((c) => c.packName === pack)
-                    .map((c) => (
-                      <CouponRow key={c.id} coupon={c} run={run} refresh={refresh} toast={toast} />
-                    ))}
-                </div>
               ))}
             </div>
           )}
